@@ -1,0 +1,3 @@
+<x-layouts.member title="Langganan" heading="Langganan kategori" description="Dapatkan notifikasi saat buku baru terbit pada kategori pilihan.">
+    <div class="subscription-grid">@foreach($categories as $category)<article><div><h2>{{ $category->name }}</h2><p>{{ $category->books_count }} buku</p></div><form method="POST" action="{{ route('member.subscriptions.toggle',$category) }}">@csrf @method('PUT')<button @class(['is-active'=>in_array($category->id,$subscribed)])>{{ in_array($category->id,$subscribed) ? 'Berlangganan' : 'Langgani' }}</button></form></article>@endforeach</div>
+</x-layouts.member>

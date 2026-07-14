@@ -1,0 +1,1219 @@
+# PRODUCT REQUIREMENTS DOCUMENT
+
+## SISTEM E-PERPUSTAKAAN DIGITAL KPU
+
+**Versi:** 1.0
+**Status:** Siap Dikembangkan
+**Jenis Sistem:** Website katalog dan pembaca buku digital
+**Platform:** Web responsif dan Progressive Web App
+**Target Pengguna:** Masyarakat umum, pegawai KPU, pengelola perpustakaan, administrator
+
+---
+
+# 1. RINGKASAN PRODUK
+
+Sistem E-Perpustakaan Digital KPU merupakan platform pengelolaan dan publikasi dokumen digital berbasis web. Sistem memungkinkan masyarakat mencari, memilih, membaca, mengunduh, serta membagikan buku atau dokumen kepemiluan melalui rak buku digital.
+
+Sistem mempertahankan alur utama website referensi:
+
+1. Pengunjung membuka rak buku.
+2. Pengunjung melihat koleksi sampul buku.
+3. Pengunjung mencari atau mengurutkan buku.
+4. Pengunjung memilih sebuah buku.
+5. Buku dibuka melalui pembaca digital.
+6. Pengunjung membaca dengan animasi pergantian halaman.
+7. Pengunjung dapat memperbesar, mencari halaman, membagikan, menyalin tautan, atau mengunduh dokumen sesuai izin.
+8. Administrator mengunggah dan mengelola dokumen melalui dashboard.
+
+Perbedaan utama berada pada desain antarmuka. Sistem baru menggunakan identitas visual modern, responsif, lebih ringan, serta menyesuaikan branding KPU.
+
+---
+
+# 2. LATAR BELAKANG
+
+Publikasi KPU seperti laporan, modul pendidikan pemilih, buku sejarah Pemilu, regulasi, buletin, majalah, laporan kegiatan, dan bahan sosialisasi masih sering tersebar pada beberapa penyimpanan.
+
+Sistem dibutuhkan untuk:
+
+* menyatukan seluruh publikasi dalam satu katalog;
+* memudahkan masyarakat menemukan dokumen;
+* menyediakan pengalaman membaca seperti buku;
+* menjaga arsip digital secara mandiri;
+* mengurangi ketergantungan pada layanan pihak ketiga;
+* mengetahui statistik penggunaan publikasi;
+* menyediakan dokumen yang ramah perangkat seluler;
+* meningkatkan keterbukaan informasi publik.
+
+---
+
+# 3. TUJUAN PRODUK
+
+## 3.1 Tujuan Utama
+
+1. Menyediakan pusat literasi digital kepemiluan.
+2. Menyediakan rak buku digital yang mudah digunakan.
+3. Mempermudah pencarian dan pengelompokan dokumen.
+4. Menyediakan pembaca PDF dengan animasi flipbook.
+5. Memungkinkan administrator mengelola seluruh koleksi.
+6. Menyediakan statistik pembaca dan unduhan.
+7. Memastikan dokumen tetap tersimpan pada server yang dikelola organisasi.
+
+## 3.2 Indikator Keberhasilan
+
+| Indikator                                 |                          Target |
+| ----------------------------------------- | ------------------------------: |
+| Waktu tampil halaman katalog              |                Maksimal 3 detik |
+| Tingkat keberhasilan membuka buku         |                     Minimal 99% |
+| Tampilan responsif                        |    Desktop, tablet, dan seluler |
+| Ketersediaan layanan                      |                   Minimal 99,5% |
+| Dokumen dapat dicari berdasarkan metadata |                            100% |
+| Buku dapat dikelola tanpa mengubah kode   |                            100% |
+| Kepatuhan aksesibilitas                   | WCAG 2.1 AA sejauh memungkinkan |
+| Dokumen memiliki backup                   |             100% dokumen publik |
+
+---
+
+# 4. RUANG LINGKUP SISTEM
+
+Sistem terdiri atas dua bagian utama.
+
+## 4.1 Portal Publik
+
+Digunakan oleh masyarakat untuk:
+
+* melihat rak buku;
+* mencari buku;
+* memfilter kategori;
+* melihat detail buku;
+* membaca buku;
+* mengunduh dokumen;
+* membagikan buku;
+* membuat QR code;
+* menyimpan buku favorit;
+* melaporkan dokumen bermasalah;
+* memberikan penilaian atau saran.
+
+## 4.2 Dashboard Administrator
+
+Digunakan oleh pengelola untuk:
+
+* mengunggah dokumen;
+* mengelola metadata;
+* mengelola kategori dan koleksi;
+* mengatur urutan buku;
+* mengatur akses dokumen;
+* mengelola pengguna;
+* melihat statistik;
+* memeriksa audit log;
+* menjalankan backup;
+* mengatur identitas website.
+
+---
+
+# 5. PERAN PENGGUNA
+
+| Peran                | Hak Akses                                                                       |
+| -------------------- | ------------------------------------------------------------------------------- |
+| Pengunjung           | Melihat, mencari, membaca, membagikan, dan mengunduh buku publik                |
+| Anggota              | Seluruh akses pengunjung, bookmark tersimpan, riwayat baca, dan koleksi pribadi |
+                |
+| Super Administrator  | Seluruh pengaturan, pengguna, backup, keamanan, dan audit log  Menambah dan mengedit buku tanpa menerbitkan, Mengunggah, mengedit, menerbitkan, dan mengarsipkan buku, Melihat laporan, statistik, metadata, serta audit log tanpa mengubah data       |
+
+Pendaftaran anggota bersifat opsional. Buku publik tetap dapat dibaca tanpa login.
+
+---
+
+# 6. ARSITEKTUR INFORMASI
+
+## 6.1 Menu Publik
+
+1. Beranda
+2. Koleksi
+3. Kategori
+4. Koleksi Terbaru
+5. Koleksi Terpopuler
+6. Tentang E-Perpustakaan
+7. Panduan
+8. Kontak
+9. Masuk
+
+## 6.2 Menu Dashboard
+
+1. Dashboard
+2. Buku
+3. Koleksi/Rak
+4. Kategori
+5. Penulis
+6. Penerbit
+7. Tag
+8. Pengguna
+9. Statistik
+10. Pesan dan Saran
+11. Audit Log
+12. Backup
+13. Pengaturan
+14. Profil Administrator
+
+---
+
+# 7. ALUR PENGGUNA
+
+## 7.1 Alur Membaca Buku
+
+```text
+Beranda
+→ Katalog/Rak Buku
+→ Cari atau pilih kategori
+→ Klik sampul buku
+→ Halaman detail buku
+→ Klik “Baca Sekarang”
+→ Pembaca flipbook
+→ Navigasi halaman
+→ Bagikan, bookmark, atau unduh
+```
+
+## 7.2 Alur Cepat dari Rak Buku
+
+```text
+Rak Buku
+→ Klik sampul
+→ Preview buku
+→ Baca Sekarang
+→ Flipbook
+```
+
+Administrator dapat mengaktifkan pilihan agar buku langsung terbuka tanpa melalui halaman detail.
+
+## 7.3 Alur Mengunggah Buku
+
+```text
+Login Administrator
+→ Menu Buku
+→ Tambah Buku
+→ Unggah PDF
+→ Sistem memvalidasi file
+→ Sistem membuat thumbnail sampul
+→ Isi metadata
+→ Tentukan kategori dan rak
+→ Atur visibilitas
+→ Preview
+→ Terbitkan
+```
+
+## 7.4 Alur Pencarian
+
+```text
+Masukkan kata kunci
+→ Sistem mencari pada judul, penulis, deskripsi, tag, ISBN, dan teks PDF
+→ Tampilkan hasil
+→ Filter kategori/tahun/penerbit
+→ Urutkan hasil
+→ Buka buku
+```
+
+---
+
+# 8. KEBUTUHAN FUNGSIONAL
+
+## 8.1 Modul Beranda
+
+**FR-HOME-01** Sistem menampilkan logo, nama instansi, dan judul e-perpustakaan.
+
+**FR-HOME-02** Sistem menampilkan kolom pencarian utama.
+
+**FR-HOME-03** Sistem menampilkan koleksi terbaru.
+
+**FR-HOME-04** Sistem menampilkan buku terpopuler.
+
+**FR-HOME-05** Sistem menampilkan kategori utama.
+
+**FR-HOME-06** Sistem menampilkan statistik singkat:
+
+* jumlah buku;
+* jumlah kategori;
+* jumlah pembaca;
+* jumlah unduhan.
+
+**FR-HOME-07** Sistem menampilkan pengumuman atau banner publikasi.
+
+**FR-HOME-08** Administrator dapat mengubah seluruh konten beranda dari dashboard.
+
+---
+
+## 8.2 Modul Rak Buku Digital
+
+**FR-SHELF-01** Sistem menampilkan buku dalam bentuk rak atau grid sampul.
+
+**FR-SHELF-02** Pengunjung dapat mengganti mode tampilan:
+
+* rak buku;
+* grid;
+* daftar.
+
+**FR-SHELF-03** Pengunjung dapat mengurutkan buku berdasarkan:
+
+* terbaru;
+* terlama;
+* judul A–Z;
+* judul Z–A;
+* paling banyak dibaca;
+* paling banyak diunduh;
+* urutan khusus administrator.
+
+**FR-SHELF-04** Administrator dapat melakukan drag-and-drop untuk mengubah urutan buku.
+
+**FR-SHELF-05** Sistem mendukung beberapa rak atau koleksi.
+
+Contoh:
+
+* Pendidikan Pemilih;
+* Sejarah Pemilu;
+* Regulasi dan Pedoman;
+* Laporan Kegiatan;
+* Majalah dan Buletin;
+* Publikasi Tahunan;
+* Publikasi KPU Kabupaten/Kota.
+
+**FR-SHELF-06** Setiap rak mempunyai:
+
+* nama;
+* slug;
+* deskripsi;
+* gambar sampul;
+* status;
+* urutan;
+* pengaturan akses.
+
+**FR-SHELF-07** Rak dapat dibagikan melalui tautan dan QR code.
+
+**FR-SHELF-08** Rak dapat disematkan pada website lain menggunakan iframe atau embed code.
+
+---
+
+## 8.3 Modul Pencarian dan Filter
+
+**FR-SEARCH-01** Pencarian harus mendukung kata kunci sebagian.
+
+**FR-SEARCH-02** Pencarian mencakup:
+
+* judul;
+* subjudul;
+* penulis;
+* penerbit;
+* deskripsi;
+* kategori;
+* tag;
+* ISBN;
+* nomor dokumen;
+* tahun terbit.
+
+**FR-SEARCH-03** Jika OCR/full-text diaktifkan, sistem mencari isi dokumen PDF.
+
+**FR-SEARCH-04** Filter yang tersedia:
+
+* kategori;
+* koleksi;
+* tahun terbit;
+* penulis;
+* penerbit;
+* jenis publikasi;
+* bahasa;
+* akses;
+* format.
+
+**FR-SEARCH-05** Sistem menampilkan saran pencarian.
+
+**FR-SEARCH-06** Sistem menyimpan kata kunci populer tanpa menyimpan data sensitif pengunjung.
+
+**FR-SEARCH-07** Sistem menampilkan pesan dan rekomendasi apabila hasil tidak ditemukan.
+
+---
+
+## 8.4 Modul Detail Buku
+
+Setiap buku memiliki halaman detail yang berisi:
+
+* sampul;
+* judul;
+* subjudul;
+* penulis;
+* editor;
+* penerbit;
+* tahun terbit;
+* ISBN atau nomor dokumen;
+* jumlah halaman;
+* bahasa;
+* ukuran file;
+* kategori;
+* tag;
+* deskripsi;
+* daftar isi;
+* jumlah pembaca;
+* jumlah unduhan;
+* tanggal publikasi;
+* dokumen terkait.
+
+Tombol tindakan:
+
+* Baca Sekarang;
+* Preview;
+* Unduh PDF;
+* Bagikan;
+* Salin Tautan;
+* QR Code;
+* Tambahkan ke Favorit;
+* Laporkan Masalah.
+
+Administrator dapat menonaktifkan tombol unduh pada buku tertentu.
+
+---
+
+## 8.5 Modul Pembaca Flipbook
+
+**FR-READER-01** Sistem menampilkan PDF dalam mode flipbook.
+
+**FR-READER-02** Animasi pergantian halaman tersedia pada desktop dan tablet.
+
+**FR-READER-03** Pada perangkat dengan performa rendah, sistem dapat menggunakan mode scroll PDF.
+
+**FR-READER-04** Toolbar pembaca minimal memiliki:
+
+* halaman sebelumnya;
+* halaman berikutnya;
+* nomor halaman;
+* daftar thumbnail;
+* daftar isi;
+* pencarian teks;
+* zoom masuk;
+* zoom keluar;
+* fit width;
+* fit page;
+* mode satu halaman;
+* mode dua halaman;
+* layar penuh;
+* cetak sesuai izin;
+* unduh sesuai izin;
+* bagikan;
+* QR code;
+* bookmark halaman;
+* mode terang/gelap;
+* pengaturan suara animasi halaman.
+
+**FR-READER-05** Pembaca mengingat halaman terakhir untuk anggota.
+
+**FR-READER-06** Untuk pengunjung tanpa akun, halaman terakhir dapat disimpan pada local storage.
+
+**FR-READER-07** Sistem mencatat jumlah pembukaan buku.
+
+**FR-READER-08** Sistem tidak boleh menghitung refresh berulang dari pengguna yang sama sebagai pembaca unik secara berlebihan.
+
+**FR-READER-09** Administrator dapat memasang watermark dinamis.
+
+Contoh watermark:
+
+```text
+E-Perpustakaan KPU
+Nama pengguna
+Tanggal akses
+```
+
+**FR-READER-10** Pembaca dapat dibuka melalui tautan langsung ke halaman tertentu.
+
+Contoh:
+
+```text
+/buku/panduan-pemilih?page=25
+```
+
+---
+
+## 8.6 Modul Unggah dan Pengelolaan Buku
+
+**FR-BOOK-01** Administrator dapat mengunggah file PDF.
+
+**FR-BOOK-02** Sistem memvalidasi:
+
+* format file;
+* MIME type;
+* ukuran maksimal;
+* nama file;
+* file rusak;
+* malware apabila layanan pemindai tersedia.
+
+**FR-BOOK-03** Sistem membuat sampul otomatis dari halaman pertama.
+
+**FR-BOOK-04** Administrator dapat mengganti sampul secara manual.
+
+**FR-BOOK-05** Sistem menyimpan file asli dan versi optimasi.
+
+**FR-BOOK-06** Sistem mendukung status:
+
+* draft;
+* menunggu tinjauan;
+* dijadwalkan;
+* terbit;
+* privat;
+* diarsipkan.
+
+**FR-BOOK-07** Administrator dapat menjadwalkan tanggal terbit.
+
+**FR-BOOK-08** Sistem menyimpan riwayat perubahan metadata.
+
+**FR-BOOK-09** Sistem dapat mengganti PDF tanpa mengubah URL buku.
+
+**FR-BOOK-10** Versi lama dapat dipertahankan untuk kebutuhan arsip.
+
+**FR-BOOK-11** Administrator dapat melakukan unggah massal.
+
+**FR-BOOK-12** Metadata massal dapat diimpor melalui CSV atau XLSX.
+
+**FR-BOOK-13** Sistem mendukung impor dokumen dari URL resmi.
+
+**FR-BOOK-14** Administrator dapat menduplikasi metadata buku.
+
+---
+
+## 8.7 Modul Visibilitas dan Hak Akses
+
+Pilihan visibilitas:
+
+1. Publik.
+2. Unlisted—hanya pengguna yang memiliki tautan.
+3. Privat—hanya pengguna login tertentu.
+4. Dilindungi password.
+5. Verifikasi email.
+6. Berdasarkan peran.
+7. Berdasarkan instansi.
+8. Terjadwal.
+9. Kedaluwarsa otomatis.
+
+Setiap buku dan rak dapat mempunyai pengaturan akses yang berbeda.
+
+---
+
+## 8.8 Modul Kategori dan Metadata
+
+Administrator dapat mengelola:
+
+* kategori;
+* subkategori;
+* koleksi;
+* tag;
+* penulis;
+* editor;
+* penerbit;
+* bahasa;
+* jenis publikasi;
+* tahun publikasi.
+
+Kategori mendukung struktur bertingkat.
+
+Contoh:
+
+```text
+Pemilu
+├── Pemilu 2019
+├── Pemilu 2024
+└── Pemilu 2029
+
+Pemilihan
+├── Pilkada 2018
+├── Pilkada 2024
+└── Pilkada Berikutnya
+```
+
+---
+
+## 8.9 Modul Berbagi dan Embed
+
+Pengunjung dapat membagikan:
+
+* buku;
+* rak;
+* kategori;
+* halaman tertentu.
+
+Pilihan berbagi:
+
+* salin tautan;
+* WhatsApp;
+* Facebook;
+* X;
+* email;
+* QR code.
+
+Administrator dapat menghasilkan embed code:
+
+```html
+<iframe
+    src="https://domain.go.id/embed/rak/pendidikan-pemilih"
+    width="100%"
+    height="720"
+    loading="lazy"
+    allowfullscreen>
+</iframe>
+```
+
+Administrator dapat mengatur domain yang diizinkan menggunakan embed.
+
+---
+
+## 8.10 Modul Anggota
+
+Fitur anggota:
+
+* registrasi;
+* login;
+* verifikasi email;
+* lupa password;
+* profil;
+* riwayat baca;
+* halaman terakhir;
+* buku favorit;
+* koleksi pribadi;
+* notifikasi buku baru;
+* penghapusan akun.
+
+Registrasi anggota dapat dinonaktifkan apabila sistem hanya digunakan sebagai perpustakaan publik.
+
+---
+
+## 8.11 Modul Statistik
+
+Dashboard menampilkan:
+
+* total buku;
+* buku aktif;
+* jumlah pembaca;
+* pembaca unik;
+* jumlah unduhan;
+* buku terpopuler;
+* kategori terpopuler;
+* pencarian terpopuler;
+* pencarian tanpa hasil;
+* perangkat pengguna;
+* browser;
+* sumber kunjungan;
+* tren harian, bulanan, dan tahunan.
+
+Laporan dapat difilter berdasarkan:
+
+* rentang tanggal;
+* buku;
+* kategori;
+* koleksi;
+* perangkat.
+
+Laporan dapat diekspor ke PDF, CSV, atau XLSX.
+
+Statistik tidak boleh menampilkan informasi pribadi pengunjung umum.
+
+---
+
+## 8.12 Modul Saran dan Pelaporan
+
+Pengunjung dapat:
+
+* mengirim saran;
+* meminta buku;
+* melaporkan file rusak;
+* melaporkan metadata salah;
+* melaporkan konten yang tidak dapat dibuka.
+
+Status laporan:
+
+* baru;
+* diproses;
+* selesai;
+* ditolak.
+
+Administrator dapat menambahkan catatan penyelesaian.
+
+---
+
+## 8.13 Modul Pengguna dan Hak Akses
+
+Sistem menggunakan Role-Based Access Control.
+
+Hak akses dapat diatur secara granular:
+
+* melihat buku;
+* menambah buku;
+* mengedit buku;
+* menghapus buku;
+* menerbitkan buku;
+* mengelola pengguna;
+* melihat statistik;
+* mengekspor laporan;
+* mengelola backup;
+* mengubah pengaturan sistem.
+
+Penghapusan buku menggunakan soft delete.
+
+Penghapusan permanen hanya dapat dilakukan Super Administrator.
+
+---
+
+## 8.14 Modul Audit Log
+
+Sistem mencatat:
+
+* login;
+* gagal login;
+* logout;
+* tambah buku;
+* perubahan metadata;
+* penggantian file;
+* penerbitan;
+* pengarsipan;
+* penghapusan;
+* perubahan pengguna;
+* perubahan hak akses;
+* perubahan pengaturan;
+* proses backup dan restore.
+
+Data audit minimal berisi:
+
+* pengguna;
+* aktivitas;
+* objek;
+* nilai sebelum;
+* nilai sesudah;
+* alamat IP;
+* user agent;
+* waktu aktivitas.
+
+Audit log tidak dapat diedit melalui dashboard.
+
+---
+
+## 8.15 Modul Backup
+
+Sistem menyediakan:
+
+* backup database;
+* backup dokumen;
+* backup sampul;
+* backup konfigurasi;
+* backup terjadwal;
+* backup manual;
+* riwayat backup;
+* notifikasi backup gagal;
+* proses restore terbatas untuk Super Administrator.
+
+Rekomendasi penyimpanan:
+
+1. salinan pada server utama;
+2. salinan pada storage berbeda;
+3. salinan berkala di luar server utama.
+
+---
+
+## 8.16 Modul Pengaturan Website
+
+Pengaturan yang dapat diubah:
+
+* nama website;
+* logo;
+* favicon;
+* nama instansi;
+* alamat;
+* email;
+* nomor kontak;
+* tautan media sosial;
+* warna utama;
+* banner;
+* teks footer;
+* kebijakan privasi;
+* syarat penggunaan;
+* batas unggah;
+* pengaturan unduhan;
+* pengaturan registrasi;
+* pengaturan komentar;
+* konfigurasi email;
+* konfigurasi penyimpanan.
+
+---
+
+# 9. FITUR TAMBAHAN YANG DIREKOMENDASIKAN
+
+Fitur berikut ditambahkan karena meningkatkan kualitas sistem dibanding rak buku dasar.
+
+## 9.1 Full-Text Search dan OCR
+
+Dokumen berbasis teks dapat langsung diindeks. Dokumen hasil pemindaian dapat diproses OCR agar isinya dapat dicari.
+
+## 9.2 Progressive Web App
+
+Pengunjung dapat memasang website pada layar utama perangkat dan membuka katalog yang sebelumnya telah dimuat.
+
+## 9.3 Daftar Isi Otomatis
+
+Sistem membaca bookmark PDF atau administrator mengisi daftar isi manual.
+
+## 9.4 Rekomendasi Buku
+
+Sistem menampilkan dokumen terkait berdasarkan kategori, tag, tahun, dan riwayat baca.
+
+## 9.5 Notifikasi Publikasi Baru
+
+Anggota dapat berlangganan kategori dan menerima pemberitahuan saat buku baru diterbitkan.
+
+## 9.6 API Publik
+
+API read-only dapat digunakan untuk menampilkan koleksi pada website KPU lainnya.
+
+## 9.7 Multi-Instansi
+
+Sistem dapat dikembangkan untuk menampung publikasi:
+
+* KPU Provinsi;
+* KPU Kabupaten/Kota;
+* unit kerja;
+* kategori kelembagaan.
+
+Setiap instansi dapat mempunyai administrator konten sendiri.
+
+## 9.8 Versi Dokumen
+
+Setiap perubahan dokumen dapat dicatat sebagai versi baru tanpa menghilangkan arsip lama.
+
+## 9.9 Tanda Tangan atau Validasi Dokumen
+
+Dokumen dapat memiliki:
+
+* nomor dokumen;
+* checksum;
+* QR verifikasi;
+* status dokumen resmi;
+* tanggal penetapan.
+
+## 9.10 Integrasi Penyimpanan
+
+Sistem mendukung penyimpanan:
+
+* local storage;
+* S3-compatible storage;
+* object storage;
+* Google Drive sebagai sumber impor apabila diperlukan.
+
+---
+
+# 10. DESAIN ANTARMUKA
+
+## 10.1 Prinsip Desain
+
+Desain harus berbeda dari website referensi dan tidak menggunakan tampilan rak kayu yang sama.
+
+Karakter desain:
+
+* modern;
+* bersih;
+* formal;
+* mudah digunakan;
+* fokus pada sampul buku;
+* ringan;
+* responsif;
+* ramah aksesibilitas.
+
+## 10.2 Identitas Visual
+
+Rekomendasi:
+
+* warna utama merah KPU;
+* putih sebagai latar utama;
+* abu-abu muda sebagai latar sekunder;
+* biru gelap untuk teks dan navigasi;
+* aksen emas secukupnya.
+
+## 10.3 Tampilan Desktop
+
+* Header tetap dan ringkas.
+* Hero berisi judul serta pencarian.
+* Kategori berbentuk chip atau kartu.
+* Buku berbentuk grid sampul.
+* Sidebar filter pada halaman katalog.
+* Detail buku menggunakan dua kolom.
+* Pembaca buku menggunakan layar penuh.
+
+## 10.4 Tampilan Seluler
+
+* Navigasi menggunakan menu hamburger.
+* Filter menggunakan bottom sheet.
+* Buku menggunakan dua kolom.
+* Pembaca menggunakan mode satu halaman atau scroll.
+* Toolbar pembaca dibuat ringkas dan dapat disembunyikan.
+
+## 10.5 Tema
+
+Sistem menyediakan:
+
+* mode terang;
+* mode gelap;
+* ukuran teks;
+* kontras tinggi;
+* pengurangan animasi.
+
+---
+
+# 11. STRUKTUR DATA UTAMA
+
+## 11.1 Tabel `users`
+
+```text
+id
+name
+email
+password
+role_id
+institution_id
+status
+email_verified_at
+last_login_at
+created_at
+updated_at
+deleted_at
+```
+
+## 11.2 Tabel `books`
+
+```text
+id
+title
+slug
+subtitle
+description
+isbn
+document_number
+author_text
+publisher_id
+publication_year
+publication_date
+language_id
+page_count
+file_size
+original_file
+optimized_file
+cover_image
+download_enabled
+print_enabled
+visibility
+password_hash
+published_at
+expires_at
+status
+created_by
+updated_by
+created_at
+updated_at
+deleted_at
+```
+
+## 11.3 Tabel `categories`
+
+```text
+id
+parent_id
+name
+slug
+description
+image
+sort_order
+status
+created_at
+updated_at
+```
+
+## 11.4 Tabel `collections`
+
+```text
+id
+name
+slug
+description
+cover_image
+visibility
+password_hash
+sort_order
+status
+created_at
+updated_at
+```
+
+## 11.5 Tabel Relasi
+
+```text
+book_category
+book_collection
+book_tag
+book_author
+book_favorite
+book_view
+book_download
+book_version
+reading_history
+bookmarks
+```
+
+## 11.6 Tabel Pendukung
+
+```text
+authors
+publishers
+tags
+languages
+institutions
+roles
+permissions
+role_permissions
+feedback
+search_logs
+audit_logs
+settings
+backups
+announcements
+```
+
+---
+
+# 12. API UTAMA
+
+## 12.1 API Publik
+
+```text
+GET /api/books
+GET /api/books/{slug}
+GET /api/categories
+GET /api/categories/{slug}/books
+GET /api/collections
+GET /api/collections/{slug}
+GET /api/search?q=
+POST /api/books/{id}/view
+POST /api/books/{id}/download
+POST /api/feedback
+```
+
+## 12.2 API Administrator
+
+```text
+POST   /api/admin/books
+PUT    /api/admin/books/{id}
+DELETE /api/admin/books/{id}
+POST   /api/admin/books/{id}/publish
+POST   /api/admin/books/{id}/archive
+POST   /api/admin/books/reorder
+POST   /api/admin/books/import
+GET    /api/admin/statistics
+GET    /api/admin/audit-logs
+POST   /api/admin/backups
+```
+
+API wajib menggunakan validasi, autentikasi, otorisasi, rate limiting, dan pencatatan error.
+
+---
+
+# 13. KEBUTUHAN NONFUNGSIONAL
+
+## 13.1 Performa
+
+* Lazy loading gambar dan halaman PDF.
+* Sampul menggunakan WebP atau format teroptimasi.
+* Pagination pada katalog.
+* Cache metadata buku.
+* Kompresi respons.
+* Optimasi PDF dilakukan melalui proses antrean.
+* Halaman katalog tidak memuat seluruh file PDF.
+
+## 13.2 Keamanan
+
+* HTTPS wajib.
+* Password di-hash.
+* CSRF protection.
+* Pencegahan SQL injection.
+* Pencegahan XSS.
+* Validasi semua upload.
+* MIME validation.
+* Batas ukuran file.
+* Rate limiting.
+* Session timeout.
+* Two-factor authentication untuk administrator.
+* Pemisahan file publik dan privat.
+* Signed URL untuk file privat.
+* Content Security Policy.
+* Security headers.
+* Audit log.
+* Backup berkala.
+
+## 13.3 SEO
+
+Setiap buku mempunyai:
+
+* meta title;
+* meta description;
+* canonical URL;
+* Open Graph;
+* Twitter Card;
+* structured data;
+* sitemap;
+* robots configuration.
+
+Dokumen privat tidak boleh masuk sitemap atau hasil mesin pencari.
+
+## 13.4 Aksesibilitas
+
+* Navigasi keyboard.
+* Label pada tombol ikon.
+* Kontras warna memadai.
+* Fokus keyboard terlihat.
+* Alt text untuk sampul.
+* Dukungan pengurangan animasi.
+* Alternatif mode scroll untuk pengguna yang kesulitan menggunakan flipbook.
+* PDF asli tetap tersedia sesuai izin.
+
+## 13.5 Kompatibilitas
+
+Sistem mendukung versi modern:
+
+* Google Chrome;
+* Microsoft Edge;
+* Mozilla Firefox;
+* Safari;
+* browser Android;
+* browser iOS.
+
+---
+
+# 14. KRITERIA PENERIMAAN
+
+Sistem dinyatakan memenuhi kebutuhan MVP apabila:
+
+1. Administrator dapat login dengan aman.
+2. Administrator dapat mengunggah PDF.
+3. Sampul dapat dibuat otomatis.
+4. Metadata dapat disimpan.
+5. Buku dapat dimasukkan ke kategori dan rak.
+6. Buku dapat diterbitkan atau disimpan sebagai draft.
+7. Pengunjung dapat melihat rak buku.
+8. Pengunjung dapat mencari dan memfilter buku.
+9. Pengunjung dapat membuka halaman detail.
+10. Pengunjung dapat membaca melalui flipbook.
+11. Pengunjung dapat mengganti halaman dan melakukan zoom.
+12. Pengunjung dapat membagikan tautan dan QR code.
+13. Unduh dapat diaktifkan atau dinonaktifkan.
+14. Tampilan berfungsi pada desktop dan seluler.
+15. Statistik pembukaan dan unduhan tercatat.
+16. Hak akses administrator berfungsi.
+17. Audit log tercatat.
+18. Backup database dan dokumen dapat dijalankan.
+19. Tidak ditemukan error kritis pada pengujian.
+20. Seluruh URL utama menggunakan slug yang mudah dibaca.
+
+---
+
+# 15. TAHAP PENGEMBANGAN
+
+## Tahap 1 — Fondasi
+
+* autentikasi;
+* role dan permission;
+* kategori;
+* koleksi;
+* buku;
+* upload PDF;
+* pengaturan website.
+
+## Tahap 2 — Portal Publik
+
+* beranda;
+* katalog;
+* pencarian;
+* filter;
+* detail buku;
+* desain responsif.
+
+## Tahap 3 — Pembaca Digital
+
+* PDF viewer;
+* flipbook;
+* thumbnail;
+* zoom;
+* fullscreen;
+* bookmark;
+* unduh;
+* berbagi;
+* QR code.
+
+## Tahap 4 — Administrasi Lanjutan
+
+* statistik;
+* audit log;
+* impor massal;
+* versi dokumen;
+* backup;
+* saran dan laporan.
+
+## Tahap 5 — Peningkatan
+
+* OCR;
+* pencarian isi dokumen;
+* PWA;
+* rekomendasi;
+* notifikasi;
+* API publik;
+* multi-instansi.
+
+---
+
+# 16. REKOMENDASI TEKNOLOGI
+
+Untuk deployment yang kompatibel dengan server Linux atau cPanel:
+
+```text
+Backend       : Laravel
+Database      : MySQL/MariaDB
+Frontend      : Blade + Livewire atau Vue
+CSS           : Tailwind CSS
+PDF Renderer  : PDF.js
+Flipbook      : Page-flip component berbasis HTML5
+Queue          : Database Queue atau Redis
+Cache          : File/Database/Redis
+Storage        : Local private storage atau S3-compatible
+Authentication : Laravel authentication
+Authorization  : Role-Based Access Control
+Chart          : Chart.js
+PWA            : Service Worker + Web App Manifest
+```
+
+Penggunaan Blade dan Livewire lebih sederhana untuk shared hosting. Vue dapat digunakan apabila server dan proses build frontend tersedia dengan baik.
+
+---
+
+# 17. DEFINITION OF DONE
+
+Sebuah fitur dianggap selesai apabila:
+
+* kode telah dibuat;
+* validasi tersedia;
+* otorisasi diterapkan;
+* error ditangani;
+* tampilan responsif;
+* pengujian berhasil;
+* tidak ada error console kritis;
+* migrasi database tersedia;
+* dokumentasi penggunaan tersedia;
+* fitur berhasil dijalankan pada server staging;
+* data dummy dan akun demo tersedia;
+* perubahan telah dimasukkan ke version control.
+
+---
+
+# 18. BATASAN IMPLEMENTASI
+
+1. Jangan menyalin source code website referensi.
+2. Jangan mengambil logo, gambar, buku, atau aset tanpa izin.
+3. Jangan menggunakan nama FlipHTML5 pada antarmuka sistem.
+4. Buat implementasi pembaca dan rak buku secara mandiri.
+5. Alur dan fungsi boleh setara, tetapi desain harus original.
+6. Gunakan komponen open-source dengan lisensi yang sesuai.
+7. Semua dokumen harus tetap memiliki salinan asli.
+8. Jangan mengandalkan layanan pihak ketiga sebagai satu-satunya penyimpanan.

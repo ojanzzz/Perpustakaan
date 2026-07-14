@@ -1,0 +1,9 @@
+<x-layouts.member title="Koleksi Saya" heading="Koleksi pribadi" description="Susun daftar bacaan pribadi tanpa mengubah rak publik.">
+    <form method="POST" action="{{ route('member.collections.store') }}" class="member-inline-form">@csrf<label>Nama koleksi<input name="name" required maxlength="100" placeholder="Contoh: Bacaan Mingguan"></label><label>Deskripsi<input name="description" maxlength="500" placeholder="Opsional"></label><button class="button-primary">Buat koleksi</button></form>
+    <div class="personal-collection-list">
+    @forelse($collections as $collection)<article class="member-panel"><div class="personal-collection-title"><div><h2>{{ $collection->name }}</h2><p>{{ $collection->description ?: 'Tanpa deskripsi' }}</p></div><form method="POST" action="{{ route('member.collections.destroy',$collection) }}" onsubmit="return confirm('Hapus koleksi ini?')">@csrf @method('DELETE')<button class="text-danger">Hapus</button></form></div>
+        @if($favoriteBooks->isNotEmpty())<form method="POST" action="{{ route('member.collections.books.store',$collection) }}" class="collection-add">@csrf<select name="book_id" required><option value="">Pilih dari favorit…</option>@foreach($favoriteBooks as $book)<option value="{{ $book->id }}">{{ $book->title }}</option>@endforeach</select><button>Tambahkan</button></form>@endif
+        <div class="collection-books">@forelse($collection->books as $book)<div><a href="{{ route('books.show',$book) }}">{{ $book->title }}</a><form method="POST" action="{{ route('member.collections.books.destroy',[$collection,$book]) }}">@csrf @method('DELETE')<button aria-label="Hapus {{ $book->title }}">×</button></form></div>@empty<p>Belum ada buku dalam koleksi.</p>@endforelse</div>
+    </article>@empty<x-public.empty-state title="Belum ada koleksi pribadi" description="Buat koleksi untuk mengelompokkan bacaan favorit Anda." />@endforelse
+    </div>
+</x-layouts.member>
