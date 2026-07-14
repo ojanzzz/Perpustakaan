@@ -29,23 +29,38 @@ class CatalogSeeder extends Seeder
         $demoPdfSize = filesize($demoPdf);
         $demoPdfHash = hash_file('sha256', $demoPdf);
 
-        $creator = User::query()->where('admin_level', AdminLevel::Superadmin)->firstOrFail();
-        $publisher = Publisher::query()->updateOrCreate(['slug' => 'penerbit-demo-kpu'], ['name' => 'Penerbit Demo KPU']);
+        $creator = User::query()
+            ->where('admin_level', AdminLevel::Superadmin)
+            ->where('email', 'superadmin@demo.test')
+            ->firstOrFail();
+        $publisher = Publisher::withTrashed()->updateOrCreate(['slug' => 'penerbit-demo-kpu'], ['name' => 'Penerbit Demo KPU']);
+        $publisher->restore();
         $language = Language::query()->updateOrCreate(['code' => 'id'], ['name' => 'Bahasa Indonesia', 'is_active' => true]);
-        $author = Author::query()->updateOrCreate(['slug' => 'tim-literasi-demo'], ['name' => 'Tim Literasi Demo']);
+        $author = Author::withTrashed()->updateOrCreate(['slug' => 'tim-literasi-demo'], ['name' => 'Tim Literasi Demo']);
+        $author->restore();
         $tag = Tag::query()->updateOrCreate(['slug' => 'dokumen-demo'], ['name' => 'Dokumen Demo']);
 
         $categoryNames = ['Pendidikan Pemilih', 'Sejarah Pemilu', 'Regulasi', 'Pedoman Teknis', 'Laporan Kegiatan', 'Majalah', 'Buletin', 'Data Pemilu', 'Kelembagaan', 'Publikasi Tahunan'];
-        $categories = collect($categoryNames)->map(fn (string $name, int $index) => Category::query()->updateOrCreate(
-            ['slug' => Str::slug($name)],
-            ['name' => $name, 'description' => "Kategori contoh {$name}.", 'sort_order' => $index + 1, 'status' => 'active']
-        ));
+        $categories = collect($categoryNames)->map(function (string $name, int $index): Category {
+            $category = Category::withTrashed()->updateOrCreate(
+                ['slug' => Str::slug($name)],
+                ['name' => $name, 'description' => "Kategori contoh {$name}.", 'sort_order' => $index + 1, 'status' => 'active']
+            );
+            $category->restore();
+
+            return $category;
+        });
 
         $collectionNames = ['Rak Utama', 'Koleksi Terbaru', 'Referensi Pemilu', 'Literasi Demokrasi', 'Arsip Tahunan'];
-        $collections = collect($collectionNames)->map(fn (string $name, int $index) => Collection::query()->updateOrCreate(
-            ['slug' => Str::slug($name)],
-            ['name' => $name, 'description' => "Rak contoh {$name}.", 'visibility' => 'public', 'sort_order' => $index + 1, 'status' => 'active']
-        ));
+        $collections = collect($collectionNames)->map(function (string $name, int $index): Collection {
+            $collection = Collection::withTrashed()->updateOrCreate(
+                ['slug' => Str::slug($name)],
+                ['name' => $name, 'description' => "Rak contoh {$name}.", 'visibility' => 'public', 'sort_order' => $index + 1, 'status' => 'active']
+            );
+            $collection->restore();
+
+            return $collection;
+        });
 
         $titles = [
             'Mengenal Tahapan Pemilihan', 'Panduan Partisipasi Warga', 'Dasar-Dasar Literasi Demokrasi',
@@ -61,7 +76,7 @@ class CatalogSeeder extends Seeder
 
         foreach ($titles as $index => $title) {
             $number = $index + 1;
-            $book = Book::query()->updateOrCreate(['slug' => sprintf('dokumen-publik-domain-demo-%02d', $number)], [
+            $book = Book::withTrashed()->updateOrCreate(['slug' => sprintf('dokumen-publik-domain-demo-%02d', $number)], [
                 'title' => $title,
                 'subtitle' => $number % 3 === 0 ? 'Bahan pengantar untuk pembaca dan masyarakat' : null,
                 'description' => 'Publikasi demo original untuk pengembangan E-Perpustakaan Digital KPU. Materi ini berisi metadata contoh mengenai literasi demokrasi dan tidak mengambil isi publikasi berhak cipta.',
@@ -87,6 +102,7 @@ class CatalogSeeder extends Seeder
                 'created_by' => $creator->id,
                 'updated_by' => $creator->id,
             ]);
+            $book->restore();
             $book->categories()->sync([$categories[($number - 1) % $categories->count()]->id]);
             $book->collections()->sync([$collections[($number - 1) % $collections->count()]->id => ['sort_order' => $number]]);
             $book->authors()->sync([$author->id]);
@@ -111,6 +127,7 @@ class CatalogSeeder extends Seeder
         DB::table('announcements')->updateOrInsert(['title' => 'Selamat Datang di E-Perpustakaan'], [
             'content' => 'Pengumuman contoh untuk environment development.',
             'is_active' => true,
+            'deleted_at' => null,
             'created_by' => $creator->id,
             'created_at' => now(),
             'updated_at' => now(),

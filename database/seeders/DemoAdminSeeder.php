@@ -12,7 +12,7 @@ class DemoAdminSeeder extends Seeder
 {
     public function run(): void
     {
-        $password = (string) env('DEMO_ACCOUNT_PASSWORD', 'KpuDemo!2026');
+        $password = (string) (env('DEMO_ACCOUNT_PASSWORD') ?: 'KpuDemo!2026');
 
         $accounts = [
             AdminLevel::Superadmin->value => ['Super Administrator', 'superadmin@demo.test'],

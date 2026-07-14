@@ -19,6 +19,25 @@ Kata sandi default development: `KpuDemo!2026`. Ubah dengan
 `DEMO_ACCOUNT_PASSWORD` sebelum menjalankan seeder. Akun tersebut tidak dibuat ketika
 `APP_ENV=production`.
 
+## Data demo yang tersedia
+
+Seeder development bersifat idempoten dan menyiapkan data yang langsung dapat dipakai
+untuk menguji portal, dashboard, serta area anggota:
+
+- 10 kategori, 5 rak, dan 20 buku dummy original dengan PDF reader 12 halaman;
+- sampul WebP, penulis, penerbit, bahasa, tag, dan relasi katalog;
+- statistik kunjungan, 8 unduhan, serta 8 pencarian termasuk pencarian tanpa hasil;
+- 3 favorit, 4 riwayat baca, 3 bookmark, 1 koleksi pribadi, dan 2 langganan kategori;
+- 2 saran/laporan dokumen, 4 audit log immutable, dan 1 pengumuman.
+
+Untuk mengisi ulang hanya data demo setelah migration sudah tersedia:
+
+```bash
+php artisan db:seed --class=DemoAdminSeeder
+php artisan db:seed --class=CatalogSeeder
+php artisan db:seed --class=DemoActivitySeeder
+```
+
 ## SQLite cepat
 
 Untuk development tanpa MySQL, ubah `.env`:

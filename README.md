@@ -14,7 +14,8 @@ Tahap 1–6 telah diimplementasikan dan menyediakan:
 - tiga role tetap dan empat level admin dengan invariansi model;
 - permission granular melalui mapping admin level, override pengguna, middleware, dan Gate;
 - permission, pengaturan awal, serta empat akun admin demo untuk non-production;
-- model, relasi, factory, dan data demo katalog (10 kategori, 5 rak, dan 20 buku);
+- model, relasi, factory, serta seeder demo idempoten untuk katalog dan aktivitas
+  (10 kategori, 5 rak, 20 buku, statistik, riwayat anggota, feedback, dan audit log);
 - dashboard administrator, pencarian/pagination buku, serta CRUD kategori dan koleksi;
 - unggah PDF privat dengan validasi MIME/signature/struktur, nama UUID, progress upload,
   versioning awal, dan queue pemrosesan metadata/sampul WebP;
