@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Content;
 
-use App\Enums\AdminLevel;
 use App\Enums\UserRole;
 use App\Jobs\ProcessPdf;
 use App\Models\Book;
@@ -29,14 +28,14 @@ class BookUploadTest extends TestCase
         Queue::fake();
     }
 
-    public function test_editor_can_create_a_draft_with_a_private_pdf(): void
+    public function test_superadmin_can_create_a_draft_with_a_private_pdf(): void
     {
-        $editor = $this->admin(AdminLevel::Editor);
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
         $category = Category::factory()->create();
         $collection = Collection::factory()->create();
         $pdf = UploadedFile::fake()->createWithContent('Dokumen Asli.pdf', PdfFixture::onePage());
 
-        $this->actingAs($editor)->post('/admin/books', [
+        $this->actingAs($superadmin)->post('/admin/books', [
             'title' => 'Panduan Pemilih',
             'description' => 'Dokumen demo tanpa konten berhak cipta.',
             'publication_year' => 2026,
@@ -50,7 +49,7 @@ class BookUploadTest extends TestCase
             'title' => 'Panduan Pemilih',
             'status' => 'draft',
             'processing_status' => 'pending',
-            'created_by' => $editor->id,
+            'created_by' => $superadmin->id,
         ]);
         $model = Book::query()->where('title', 'Panduan Pemilih')->firstOrFail();
 
@@ -65,10 +64,10 @@ class BookUploadTest extends TestCase
 
     public function test_corrupt_pdf_is_rejected_without_persisting_a_book(): void
     {
-        $editor = $this->admin(AdminLevel::Editor);
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
         $file = UploadedFile::fake()->createWithContent('broken.pdf', 'not a pdf');
 
-        $this->actingAs($editor)->post('/admin/books', [
+        $this->actingAs($superadmin)->post('/admin/books', [
             'title' => 'Rusak',
             'visibility' => 'public',
             'pdf' => $file,
@@ -78,22 +77,14 @@ class BookUploadTest extends TestCase
         Queue::assertNothingPushed();
     }
 
-    public function test_auditor_cannot_upload_a_book(): void
+    public function test_member_cannot_upload_a_book(): void
     {
-        $auditor = $this->admin(AdminLevel::Auditor);
+        $member = User::factory()->create(['role' => UserRole::Member]);
 
-        $this->actingAs($auditor)->post('/admin/books', [
+        $this->actingAs($member)->post('/admin/books', [
             'title' => 'Dilarang',
             'visibility' => 'public',
             'pdf' => UploadedFile::fake()->createWithContent('valid.pdf', PdfFixture::onePage()),
         ])->assertForbidden();
-    }
-
-    private function admin(AdminLevel $level): User
-    {
-        return User::factory()->create([
-            'role' => UserRole::Admin,
-            'admin_level' => $level,
-        ]);
     }
 }

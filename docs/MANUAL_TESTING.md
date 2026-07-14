@@ -15,26 +15,26 @@
 - [ ] Login benar berhasil dan session berganti; login salah menampilkan error generik.
 - [ ] Akun inactive ditolak.
 - [ ] Registrasi menghasilkan 404 ketika setting nonaktif.
-- [ ] Admin tanpa `dashboard.view` menerima 403.
-- [ ] Admin dengan `dashboard.view` dapat membuka `/admin`.
+- [ ] Member menerima 403 saat membuka `/admin`, termasuk bila memiliki baris override permission.
+- [ ] Superadmin tanpa `dashboard.view` menerima 403; setelah permission diberikan dapat membuka `/admin`.
 - [ ] Dashboard menampilkan metrik, grafik tujuh hari, buku terbaru, dan status backup.
-- [ ] Editor dapat membuat draft dan mengunggah PDF valid tetapi tidak dapat menghapus buku.
+- [ ] Superadmin dapat membuat draft, mengunggah PDF valid, mengubah metadata, dan menghapus buku sesuai policy.
 - [ ] PDF rusak/non-PDF ditolak dengan pesan yang jelas dan tidak meninggalkan file privat.
 - [ ] Status pemrosesan berubah pending → processing → completed atau failed.
-- [ ] Admin Konten dapat membuat, mengubah, dan menghapus kategori/koleksi kosong.
-- [ ] Auditor dapat membaca dashboard/katalog tetapi seluruh operasi perubahan ditolak.
+- [ ] Superadmin dapat membuat, mengubah, dan menghapus kategori/koleksi kosong.
+- [ ] Member tidak dapat membaca dashboard maupun menjalankan mutasi admin.
 - [ ] Daftar buku mencari judul, memfilter status, dan mempertahankan query saat pagination.
 - [ ] Navigasi keyboard dan focus state terlihat.
 - [ ] Reader membuka `?page=10`, lazy-render halaman, serta berpindah flip/scroll tanpa memuat semua halaman.
 - [ ] Zoom, fit width/page, thumbnail, outline, pencarian teks, fullscreen, tema, dan reduced motion berfungsi.
 - [ ] Download dan print hanya muncul/berhasil jika izin buku aktif.
 - [ ] Favorit, bookmark, riwayat, halaman terakhir, koleksi pribadi, langganan, dan notifikasi tersimpan.
-- [ ] Editor mengirim draft; Admin Konten mengembalikan dengan catatan atau menerbitkan/menjadwalkan.
-- [ ] Auditor hanya dapat melihat statistik, audit, dan status backup tanpa mutasi.
+- [ ] Superadmin menjalankan alur draft → tinjauan → dikembalikan/diterbitkan/dijadwalkan → arsip beserta catatan.
+- [ ] Member tidak dapat melihat statistik admin, audit log, atau status backup.
 - [ ] Audit log menolak update/delete langsung dan ekspor CSV dapat dibuka.
 - [ ] Backup queued berubah pending → running → completed dan checksum cocok.
 - [ ] Embed buku/rak/kategori ditolak dari referer di luar allowlist.
-- [ ] Admin dengan 2FA aktif selalu melewati challenge setelah login baru.
+- [ ] Superadmin dengan 2FA aktif selalu melewati challenge setelah login baru; member ditolak dari seluruh endpoint 2FA admin.
 - [ ] Manifest PWA terdeteksi; offline shell tersedia; endpoint PDF tidak masuk cache.
 
 ## Mobile
@@ -52,6 +52,8 @@
 ## Database kosong
 
 - [ ] `php artisan migrate:fresh --seed --force` berhasil.
-- [ ] Empat level admin hanya tersedia pada non-production.
-- [ ] Editor tidak memiliki `books.publish`.
-- [ ] Auditor tidak memiliki operasi perubahan konten.
+- [ ] Tabel `users` tidak memiliki `admin_level`; enum role hanya `public`, `member`, dan `superadmin`.
+- [ ] Tidak ada akun database ber-role `public`; seeder non-production hanya membuat satu superadmin dan satu member.
+- [ ] `role_permissions` memberi hak granular kepada superadmin dan override member tidak dapat menaikkan privilege.
+- [ ] Upgrade database mempertahankan member, mempromosikan superadmin lama, dan mengubah editor/content-admin/auditor lama menjadi member inactive.
+- [ ] Seeder production tidak membuat akun demo.

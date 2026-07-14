@@ -46,7 +46,7 @@ class BookAccessService
             BookVisibility::Role => $this->isActiveUser($user),
             BookVisibility::VerifiedEmail => $this->isVerifiedUser($user),
             BookVisibility::Password => $passwordUnlocked,
-            BookVisibility::Private => $this->isActiveAdmin($user),
+            BookVisibility::Private => $this->isActiveSuperadmin($user),
         };
     }
 
@@ -81,7 +81,7 @@ class BookAccessService
     {
         return $user !== null
             && $user->status === AccountStatus::Active
-            && in_array($user->role, [UserRole::Member, UserRole::Admin], true);
+            && in_array($user->role, [UserRole::Member, UserRole::Superadmin], true);
     }
 
     private function isVerifiedUser(?User $user): bool
@@ -89,8 +89,8 @@ class BookAccessService
         return $this->isActiveUser($user) && $user->hasVerifiedEmail();
     }
 
-    private function isActiveAdmin(?User $user): bool
+    private function isActiveSuperadmin(?User $user): bool
     {
-        return $this->isActiveUser($user) && $user->role === UserRole::Admin;
+        return $this->isActiveUser($user) && $user->role === UserRole::Superadmin;
     }
 }

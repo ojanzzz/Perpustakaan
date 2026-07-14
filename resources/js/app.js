@@ -103,7 +103,11 @@ document.addEventListener('DOMContentLoaded', () => {
     if (deviceChart) new Chart(deviceChart, { type: 'doughnut', data: { labels: JSON.parse(deviceChart.dataset.labels), datasets: [{ data: JSON.parse(deviceChart.dataset.values), backgroundColor: ['#b91c1c','#0f2747','#c59a3d','#64748b'] }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
     document.querySelectorAll('[data-upload-form]').forEach((form) => {
         form.addEventListener('submit', (event) => {
-            if (!window.XMLHttpRequest || !form.querySelector('input[type="file"]')?.files.length) return;
+            if (!window.XMLHttpRequest) return;
+            const hasFile = form.querySelector('input[type="file"]')?.files.length > 0;
+            const hasUrl = !!form.querySelector('input[name="pdf_url"]')?.value.trim();
+            if (!hasFile && !hasUrl) return;
+            if (hasFile && !form.querySelector('input[name="pdf_source"]')?.checked && form.querySelector('input[name="pdf_source"]:checked')?.value === 'url' && !hasUrl) return;
             event.preventDefault();
             const status = form.querySelector('[data-upload-status]');
             const progress = form.querySelector('[data-upload-progress]');

@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Enums\AdminLevel;
 use App\Enums\UserRole;
 use App\Models\Book;
 use App\Models\Bookmark;
@@ -29,7 +28,7 @@ class DemoActivitySeeder extends Seeder
             ->where('email', 'member@demo.test')
             ->firstOrFail();
         $superadmin = User::query()
-            ->where('admin_level', AdminLevel::Superadmin)
+            ->where('role', UserRole::Superadmin)
             ->where('email', 'superadmin@demo.test')
             ->firstOrFail();
         $books = Book::query()
@@ -182,7 +181,7 @@ class DemoActivitySeeder extends Seeder
             ['auth.login', User::class, $superadmin->id, null, ['status' => 'success']],
             ['books.create', Book::class, $books[0]->id, null, ['title' => $books[0]->title]],
             ['books.publish', Book::class, $books[1]->id, ['status' => 'draft'], ['status' => 'published']],
-            ['permissions.update', User::class, $superadmin->id, null, ['admin_level' => 'superadmin']],
+            ['permissions.update', User::class, $superadmin->id, null, ['role' => UserRole::Superadmin->value]],
         ];
 
         foreach ($logs as $index => [$action, $targetType, $targetId, $before, $after]) {

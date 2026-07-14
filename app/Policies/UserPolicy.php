@@ -44,7 +44,7 @@ class UserPolicy
 
     private function canManage(User $actor, User $target): bool
     {
-        $permission = $target->role === UserRole::Admin
+        $permission = $target->role === UserRole::Superadmin
             ? 'users.manage_admins'
             : 'users.manage_members';
 

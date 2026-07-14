@@ -13,7 +13,7 @@ class DatabaseSchemaTest extends TestCase
     public function test_a_fresh_database_contains_the_required_application_tables(): void
     {
         $tables = [
-            'users', 'institutions', 'permissions', 'admin_level_permissions',
+            'users', 'institutions', 'permissions', 'role_permissions',
             'user_permissions', 'books', 'book_versions', 'categories',
             'book_category', 'collections', 'book_collection', 'authors',
             'book_author', 'publishers', 'tags', 'book_tag', 'languages',
@@ -25,13 +25,24 @@ class DatabaseSchemaTest extends TestCase
         foreach ($tables as $table) {
             $this->assertTrue(Schema::hasTable($table), "Missing table [{$table}].");
         }
+
+        $this->assertFalse(Schema::hasTable('admin_level_permissions'));
     }
 
     public function test_users_table_has_the_authoritative_role_columns(): void
     {
         $this->assertTrue(Schema::hasColumns('users', [
-            'id', 'name', 'email', 'password', 'role', 'admin_level', 'status',
+            'id', 'name', 'email', 'password', 'role', 'status',
             'email_verified_at', 'last_login_at', 'created_at', 'updated_at', 'deleted_at',
+        ]));
+
+        $this->assertFalse(Schema::hasColumn('users', 'admin_level'));
+    }
+
+    public function test_role_permissions_use_the_authoritative_role_column(): void
+    {
+        $this->assertTrue(Schema::hasColumns('role_permissions', [
+            'role', 'permission_id',
         ]));
     }
 }

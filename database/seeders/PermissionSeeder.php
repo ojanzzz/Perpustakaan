@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Enums\AdminLevel;
+use App\Enums\UserRole;
 use App\Models\Permission;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -36,36 +36,13 @@ class PermissionSeeder extends Seeder
             );
         }
 
-        $editor = [
-            'dashboard.view', 'books.view', 'books.create', 'books.update',
-            'books.upload', 'books.preview', 'books.submit',
-        ];
-        $contentAdmin = array_merge($editor, [
-            'books.review', 'books.publish', 'books.schedule', 'books.archive',
-            'books.delete', 'books.versions', 'taxonomy.manage',
-            'announcements.manage', 'feedback.manage', 'analytics.view', 'analytics.export',
-        ]);
-        $auditor = [
-            'dashboard.view', 'books.view', 'analytics.view', 'analytics.export',
-            'audit.view', 'backup.view',
-        ];
-        $superadmin = array_keys($this->permissions);
+        DB::table('role_permissions')->delete();
 
-        $map = [
-            AdminLevel::Editor->value => $editor,
-            AdminLevel::ContentAdmin->value => $contentAdmin,
-            AdminLevel::Auditor->value => $auditor,
-            AdminLevel::Superadmin->value => $superadmin,
-        ];
-
-        foreach ($map as $level => $permissionNames) {
-            $ids = Permission::query()->whereIn('name', $permissionNames)->pluck('id');
-            foreach ($ids as $id) {
-                DB::table('admin_level_permissions')->insertOrIgnore([
-                    'admin_level' => $level,
-                    'permission_id' => $id,
-                ]);
-            }
+        foreach (Permission::query()->pluck('id') as $permissionId) {
+            DB::table('role_permissions')->insert([
+                'role' => UserRole::Superadmin->value,
+                'permission_id' => $permissionId,
+            ]);
         }
     }
 

@@ -36,7 +36,6 @@ class RegisteredUserController extends Controller
         $user = User::query()->create([
             ...$validated,
             'role' => UserRole::Member,
-            'admin_level' => null,
             'status' => AccountStatus::Active,
         ]);
 

@@ -61,4 +61,22 @@
   - [x] BCA-002 Struktur layer dan interaksi 3D
   - [x] BCA-003 Regression test, build, dan browser QA
 
+## Post-delivery access-model retrofit
+
+- [ ] AS-001-R Replace the legacy role/admin-level schema with public, member, and superadmin
+- [ ] AS-002-R Migrate authorization, 2FA, document access, and policies to the new role model
+- [ ] AS-003-R Simplify administrator account management, permissions, and demo seed data
+- [ ] AS-004-R Replace legacy-level workflow tests and UI copy with superadmin ownership
+- [ ] AS-005-R Verify fresh install, existing-data upgrade, full regression suite, and documentation
+
+## What just happened
+
+Scope change confirmed: the completed four-level administrator model is being replaced
+with exactly three access levels. Five retrofit tasks were added; editor, content-admin,
+and auditor behavior will be removed rather than preserved under hidden aliases.
+
+## What's next
+
+AS-001-R · Write failing contracts and migrate the authoritative user/access schema.
+
 > Rencana eksekusi rinci: `vibe/MASTER_COMPLETION_PLAN.md`.

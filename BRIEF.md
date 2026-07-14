@@ -6,11 +6,11 @@ Portal katalog dan pembaca dokumen digital KPU yang menyatukan publikasi kepemil
 memudahkan pencarian, menyediakan pengalaman baca PDF/flipbook, dan memberi pengelola
 workflow penerbitan yang terukur serta dapat diaudit.
 
-## Users
+## Users and access levels
 
-- Visitor: mengakses konten publik tanpa akun.
-- Member: menyimpan favorit, bookmark, dan riwayat baca.
-- Admin: satu role dengan level `editor`, `content_admin`, `auditor`, atau `superadmin`.
+- Public: konteks pengunjung tanpa akun untuk mengakses konten publik.
+- Member: akun anggota untuk menyimpan favorit, bookmark, dan riwayat baca.
+- Superadmin: satu-satunya akun pengelola dengan akses dashboard dan permission granular.
 
 ## Locked stack
 
@@ -32,3 +32,8 @@ bookcase visual treatment and no copied assets from the reference site.
 `Requitment.txt` and the attached detailed specification supplied on 2026-07-13.
 Where they differ, the attached specification and the user's latest message win.
 
+## Scope changes
+
+- 2026-07-14: model visitor/member/admin beserta empat admin level diganti menjadi
+  tepat tiga level akses `public`, `member`, dan `superadmin` untuk menyederhanakan
+  pengelolaan sistem.

@@ -3,16 +3,13 @@
 Dokumen ini khusus environment lokal/testing dan tidak boleh dipublikasikan sebagai
 halaman production.
 
-## Akun admin demo
+## Akun demo
 
 Setelah `php artisan migrate:fresh --seed`, tersedia:
 
-| Level | Email |
+| Akses | Email |
 |---|---|
 | Superadmin | `superadmin@demo.test` |
-| Admin Konten | `content.admin@demo.test` |
-| Editor | `editor@demo.test` |
-| Auditor | `auditor@demo.test` |
 | Anggota | `member@demo.test` |
 
 Kata sandi default development: `KpuDemo!2026`. Ubah dengan
@@ -58,12 +55,20 @@ php artisan migrate --seed
 composer dev
 ```
 
-## Permission override
+## Model akses dan permission override
 
-Hak bawaan berasal dari `admin_level_permissions`. Baris di `user_permissions` selalu
-menang atas hak level: `allowed=0` mencabut dan `allowed=1` menambahkan permission.
-Semua route admin harus memakai middleware `permission:<nama>` dan operasi resource
-memakai policy yang mendelegasikan keputusan ke permission service.
+`public` adalah konteks tanpa akun database. Registrasi hanya menghasilkan role `member`,
+sedangkan dashboard hanya dapat digunakan role `superadmin`.
+
+Hak bawaan superadmin berasal dari `role_permissions`. Setelah role superadmin
+terverifikasi, baris di `user_permissions` dapat mencabut (`allowed=0`) atau menambahkan
+(`allowed=1`) permission untuk akun tersebut. Override milik member tidak pernah
+menaikkan privilege. Semua route admin harus memakai middleware `permission:<nama>` dan
+operasi resource memakai policy yang mendelegasikan keputusan ke permission service.
+
+Pada upgrade database lama, akun admin berlevel superadmin dipromosikan menjadi role
+`superadmin`. Akun editor, content-admin, dan auditor lama dipindahkan menjadi member
+inactive agar tidak lagi memiliki akses dashboard, sementara referensi audit tetap utuh.
 
 ## Pemrosesan PDF
 
@@ -98,8 +103,9 @@ php artisan library:backup --queue
 Arsip berada di `storage/app/backups`, tidak boleh disymlink ke publik. Verifikasi checksum
 yang tercatat pada dashboard sebelum memindahkan arsip ke media penyimpanan lain.
 
-## 2FA administrator
+## 2FA superadmin
 
 Buka **Dashboard → Keamanan akun**, tambahkan secret ke aplikasi autentikator TOTP, lalu
-masukkan kode enam digit. Kode pemulihan hanya ditampilkan sekali. Superadmin dapat
-mewajibkan 2FA seluruh admin melalui menu Pengaturan.
+masukkan kode enam digit. Kode pemulihan hanya ditampilkan sekali. Pengaturan kewajiban
+2FA berlaku untuk akun superadmin; member tidak dapat membuka endpoint setup, challenge,
+atau penonaktifan 2FA administrator.

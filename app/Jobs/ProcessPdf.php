@@ -8,7 +8,6 @@ use App\Models\Book;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Storage;
-use RuntimeException;
 use Symfony\Component\Process\Process;
 
 class ProcessPdf implements ShouldQueue
@@ -58,10 +57,18 @@ class ProcessPdf implements ShouldQueue
     private function createCover(string $pdfPath, int $bookId): ?string
     {
         $binary = (string) config('pdf.pdftoppm_binary');
-        if ($binary === '') {
-            return null;
+        if ($binary !== '' && $this->commandExists($binary)) {
+            $cover = $this->createCoverWithPdfToPpm($pdfPath, $bookId, $binary);
+            if ($cover !== null) {
+                return $cover;
+            }
         }
 
+        return $this->createCoverWithPython($pdfPath, $bookId);
+    }
+
+    private function createCoverWithPdfToPpm(string $pdfPath, int $bookId, string $binary): ?string
+    {
         $prefix = sys_get_temp_dir().DIRECTORY_SEPARATOR.'kpu-cover-'.bin2hex(random_bytes(8));
         $jpg = $prefix.'.jpg';
         try {
@@ -71,25 +78,66 @@ class ProcessPdf implements ShouldQueue
             if (! $process->isSuccessful() || ! is_file($jpg)) {
                 return null;
             }
-            $image = imagecreatefromjpeg($jpg);
-            if ($image === false) {
-                throw new RuntimeException('Thumbnail PDF tidak dapat dibaca oleh GD.');
-            }
-            ob_start();
-            imagewebp($image, null, 82);
-            $webp = ob_get_clean();
-            imagedestroy($image);
-            if (! is_string($webp)) {
-                return null;
-            }
-            $path = "covers/{$bookId}/cover.webp";
-            Storage::disk('public')->put($path, $webp);
 
-            return $path;
+            return $this->convertJpgToWebP($jpg, $bookId);
         } finally {
             if (is_file($jpg)) {
                 @unlink($jpg);
             }
         }
+    }
+
+    private function createCoverWithPython(string $pdfPath, int $bookId): ?string
+    {
+        $python = PHP_OS_FAMILY === 'Windows' ? 'python' : 'python3';
+        $script = base_path('scripts/pdf_cover.py');
+        if (! is_file($script)) {
+            return null;
+        }
+
+        $prefix = sys_get_temp_dir().DIRECTORY_SEPARATOR.'kpu-cover-'.bin2hex(random_bytes(8));
+        $jpg = $prefix.'.jpg';
+        try {
+            $process = new Process([$python, $script, $pdfPath, $jpg, '2']);
+            $process->setTimeout(60);
+            $process->run();
+            if (! $process->isSuccessful() || ! is_file($jpg)) {
+                return null;
+            }
+
+            return $this->convertJpgToWebP($jpg, $bookId);
+        } finally {
+            if (is_file($jpg)) {
+                @unlink($jpg);
+            }
+        }
+    }
+
+    private function convertJpgToWebP(string $jpgPath, int $bookId): ?string
+    {
+        $image = imagecreatefromjpeg($jpgPath);
+        if ($image === false) {
+            return null;
+        }
+        ob_start();
+        imagewebp($image, null, 82);
+        $webp = ob_get_clean();
+        imagedestroy($image);
+        if (! is_string($webp)) {
+            return null;
+        }
+        $path = "covers/{$bookId}/cover.webp";
+        Storage::disk('public')->put($path, $webp);
+
+        return $path;
+    }
+
+    private function commandExists(string $binary): bool
+    {
+        if (PHP_OS_FAMILY === 'Windows') {
+            return (bool) preg_match('/^[A-Z]:\\\\/', $binary) || (bool) shell_exec("where $binary 2>NUL");
+        }
+
+        return (bool) shell_exec("command -v $binary 2>/dev/null");
     }
 }

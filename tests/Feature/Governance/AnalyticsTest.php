@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Governance;
 
-use App\Enums\AdminLevel;
 use App\Enums\BookStatus;
 use App\Enums\BookVisibility;
 use App\Enums\UserRole;
@@ -50,18 +49,20 @@ class AnalyticsTest extends TestCase
         $this->assertDatabaseHas('book_downloads', ['book_id' => $book->id]);
     }
 
-    public function test_auditor_can_view_statistics_and_export_valid_formats(): void
+    public function test_superadmin_can_view_statistics_and_export_valid_formats_while_member_cannot(): void
     {
         $this->seed(PermissionSeeder::class);
-        $auditor = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::Auditor]);
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+        $member = User::factory()->create(['role' => UserRole::Member]);
         $book = $this->publishedBook(['title' => 'Statistik Buku']);
         $book->views()->create(['visitor_hash' => hash('sha256', 'visitor'), 'session_hash' => hash('sha256', 'session'), 'viewed_at' => now(), 'duration_seconds' => 90]);
 
-        $this->actingAs($auditor)->get('/admin/statistics')->assertOk()->assertSee('Statistik Buku');
-        $this->actingAs($auditor)->get('/admin/statistics/export?format=csv')->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        $xlsx = $this->actingAs($auditor)->get('/admin/statistics/export?format=xlsx')->assertOk();
+        $this->actingAs($member)->get('/admin/statistics')->assertForbidden();
+        $this->actingAs($superadmin)->get('/admin/statistics')->assertOk()->assertSee('Statistik Buku');
+        $this->actingAs($superadmin)->get('/admin/statistics/export?format=csv')->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $xlsx = $this->actingAs($superadmin)->get('/admin/statistics/export?format=xlsx')->assertOk();
         $this->assertStringStartsWith('PK', $xlsx->streamedContent());
-        $pdf = $this->actingAs($auditor)->get('/admin/statistics/export?format=pdf')->assertOk();
+        $pdf = $this->actingAs($superadmin)->get('/admin/statistics/export?format=pdf')->assertOk();
         $this->assertStringStartsWith('%PDF-', $pdf->getContent());
     }
 

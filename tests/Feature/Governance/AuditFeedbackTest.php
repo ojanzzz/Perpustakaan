@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Governance;
 
-use App\Enums\AdminLevel;
 use App\Enums\UserRole;
 use App\Models\AuditLog;
 use App\Models\Book;
@@ -31,7 +30,7 @@ class AuditFeedbackTest extends TestCase
 
     public function test_login_and_book_change_are_written_to_audit_log(): void
     {
-        $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::ContentAdmin, 'password' => 'Password!123']);
+        $admin = User::factory()->create(['role' => UserRole::Superadmin, 'password' => 'Password!123']);
 
         $this->post('/login', ['email' => $admin->email, 'password' => 'Password!123'])->assertRedirect();
         $this->assertDatabaseHas('audit_logs', ['user_id' => $admin->id, 'action' => 'auth.login']);
@@ -58,22 +57,22 @@ class AuditFeedbackTest extends TestCase
         DB::table('audit_logs')->where('id', $log->id)->delete();
     }
 
-    public function test_auditor_can_view_and_export_audit_while_editor_cannot(): void
+    public function test_superadmin_can_view_and_export_audit_while_member_cannot(): void
     {
         $this->seed(PermissionSeeder::class);
-        $auditor = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::Auditor]);
-        $editor = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::Editor]);
-        AuditLog::query()->create(['user_id' => $auditor->id, 'action' => 'report.view']);
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+        $member = User::factory()->create(['role' => UserRole::Member]);
+        AuditLog::query()->create(['user_id' => $superadmin->id, 'action' => 'report.view']);
 
-        $this->actingAs($auditor)->get('/admin/audit-logs')->assertOk()->assertSee('report.view');
-        $this->actingAs($auditor)->get('/admin/audit-logs/export')->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
-        $this->actingAs($editor)->get('/admin/audit-logs')->assertForbidden();
+        $this->actingAs($superadmin)->get('/admin/audit-logs')->assertOk()->assertSee('report.view');
+        $this->actingAs($superadmin)->get('/admin/audit-logs/export')->assertOk()->assertHeader('content-type', 'text/csv; charset=UTF-8');
+        $this->actingAs($member)->get('/admin/audit-logs')->assertForbidden();
     }
 
-    public function test_content_admin_can_resolve_feedback(): void
+    public function test_superadmin_can_resolve_feedback(): void
     {
         $this->seed(PermissionSeeder::class);
-        $admin = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::ContentAdmin]);
+        $admin = User::factory()->create(['role' => UserRole::Superadmin]);
         $id = DB::table('feedback')->insertGetId(['type' => 'report', 'subject' => 'File rusak', 'message' => 'PDF tidak terbuka', 'status' => 'new', 'created_at' => now(), 'updated_at' => now()]);
 
         $this->actingAs($admin)->put("/admin/feedback/{$id}", ['status' => 'resolved', 'resolution_notes' => 'PDF sudah diganti.'])

@@ -52,7 +52,7 @@
                     <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 4a8 8 0 0 1 0 16z"/></svg>
                 </button>
                 @auth
-                    @if(auth()->user()->role === \App\Enums\UserRole::Admin)<a href="{{ route('admin.dashboard') }}" class="button-secondary hidden sm:inline-flex">Dashboard</a>
+                    @if(auth()->user()->role === \App\Enums\UserRole::Superadmin)<a href="{{ route('admin.dashboard') }}" class="button-secondary hidden sm:inline-flex">Dashboard</a>
                     @else<a href="{{ route('member.profile') }}" class="button-secondary hidden sm:inline-flex">Akun saya</a>@endif
                     <form action="{{ route('logout') }}" method="POST" class="hidden sm:block">@csrf<button class="button-primary">Keluar</button></form>
                 @else

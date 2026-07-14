@@ -7,6 +7,7 @@ use App\Enums\BookStatus;
 use App\Models\Book;
 use App\Notifications\BookPublishedNotification;
 use Illuminate\Support\Facades\Notification;
+use Illuminate\Support\Facades\Storage;
 
 class BookObserver
 {
@@ -42,7 +43,27 @@ class BookObserver
 
     public function deleted(Book $book): void
     {
+        $this->cleanupFiles($book);
         $this->audit->record('books.delete', $book, $book->getOriginal());
+    }
+
+    public function forceDeleted(Book $book): void
+    {
+        $this->cleanupFiles($book);
+        $this->audit->record('books.force_delete', $book, $book->getOriginal());
+    }
+
+    private function cleanupFiles(Book $book): void
+    {
+        if ($book->original_file) {
+            Storage::disk('private')->delete($book->original_file);
+        }
+        if ($book->optimized_file) {
+            Storage::disk('private')->delete($book->optimized_file);
+        }
+        if ($book->cover_image) {
+            Storage::disk('public')->delete($book->cover_image);
+        }
     }
 
     public function restored(Book $book): void

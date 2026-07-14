@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use App\Enums\AdminLevel;
 use App\Enums\BookStatus;
 use App\Enums\BookVisibility;
 use App\Enums\ProcessingStatus;
+use App\Enums\UserRole;
 use App\Models\Author;
 use App\Models\Book;
 use App\Models\Category;
@@ -30,7 +30,7 @@ class CatalogSeeder extends Seeder
         $demoPdfHash = hash_file('sha256', $demoPdf);
 
         $creator = User::query()
-            ->where('admin_level', AdminLevel::Superadmin)
+            ->where('role', UserRole::Superadmin)
             ->where('email', 'superadmin@demo.test')
             ->firstOrFail();
         $publisher = Publisher::withTrashed()->updateOrCreate(['slug' => 'penerbit-demo-kpu'], ['name' => 'Penerbit Demo KPU']);

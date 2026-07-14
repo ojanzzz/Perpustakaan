@@ -40,7 +40,15 @@ class BookController extends Controller
     public function store(StoreBookRequest $request, PdfIngestionService $service): RedirectResponse
     {
         try {
-            $service->createDraft($request->safe()->except('pdf'), $request->file('pdf'), $request->user());
+            if ($request->filled('pdf_url')) {
+                $service->createDraftFromUrl(
+                    $request->safe()->except(['pdf', 'pdf_url']),
+                    $request->input('pdf_url'),
+                    $request->user()
+                );
+            } else {
+                $service->createDraft($request->safe()->except('pdf'), $request->file('pdf'), $request->user());
+            }
         } catch (\RuntimeException $exception) {
             throw ValidationException::withMessages(['pdf' => $exception->getMessage()]);
         }
@@ -59,23 +67,33 @@ class BookController extends Controller
         ]);
     }
 
-    public function update(UpdateBookRequest $request, Book $book): RedirectResponse
+    public function update(UpdateBookRequest $request, Book $book, PdfIngestionService $service): RedirectResponse
     {
-        $data = $request->validated();
-        $book->update([
-            ...Arr::except($data, ['category_ids', 'collection_ids']),
-            'download_enabled' => $request->boolean('download_enabled'),
-            'print_enabled' => $request->boolean('print_enabled'),
-            'updated_by' => $request->user()->id,
-        ]);
-        if ($request->has('category_ids')) {
-            $book->categories()->sync($data['category_ids'] ?? []);
-        }
-        if ($request->has('collection_ids')) {
-            $book->collections()->sync($data['collection_ids'] ?? []);
-        }
+        try {
+            if ($request->hasFile('pdf')) {
+                $service->replacePdf($book, $request->file('pdf'), $request->user());
 
-        return redirect('/admin/books')->with('status', 'Metadata buku diperbarui.');
+                return redirect('/admin/books')->with('status', 'Dokumen buku diganti dan masuk antrean pemrosesan.');
+            }
+
+            $data = $request->validated();
+            $book->update([
+                ...Arr::except($data, ['category_ids', 'collection_ids']),
+                'download_enabled' => $request->boolean('download_enabled'),
+                'print_enabled' => $request->boolean('print_enabled'),
+                'updated_by' => $request->user()->id,
+            ]);
+            if ($request->has('category_ids')) {
+                $book->categories()->sync($data['category_ids'] ?? []);
+            }
+            if ($request->has('collection_ids')) {
+                $book->collections()->sync($data['collection_ids'] ?? []);
+            }
+
+            return redirect('/admin/books')->with('status', 'Metadata buku diperbarui.');
+        } catch (\RuntimeException $exception) {
+            throw ValidationException::withMessages(['pdf' => $exception->getMessage()]);
+        }
     }
 
     public function destroy(Book $book): RedirectResponse
@@ -83,5 +101,12 @@ class BookController extends Controller
         $book->delete();
 
         return redirect('/admin/books')->with('status', 'Buku dipindahkan ke sampah.');
+    }
+
+    public function forceDelete(Book $book): RedirectResponse
+    {
+        $book->forceDelete();
+
+        return redirect('/admin/books')->with('status', 'Buku dihapus permanen.');
     }
 }

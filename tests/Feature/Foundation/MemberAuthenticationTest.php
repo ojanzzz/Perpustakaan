@@ -36,7 +36,6 @@ class MemberAuthenticationTest extends TestCase
         $response->assertRedirect('/');
         $user = User::query()->where('email', 'anggota@example.test')->firstOrFail();
         $this->assertSame(UserRole::Member, $user->role);
-        $this->assertNull($user->admin_level);
         $this->assertAuthenticatedAs($user);
     }
 

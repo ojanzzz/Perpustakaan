@@ -37,7 +37,7 @@ class AuthenticatedSessionController extends Controller
         $request->session()->forget('two_factor.confirmed_at');
         $request->user()->forceFill(['last_login_at' => now()])->saveQuietly();
 
-        if ($request->user()->role === UserRole::Admin && $request->user()->two_factor_enabled_at) {
+        if ($request->user()->role === UserRole::Superadmin && $request->user()->two_factor_enabled_at) {
             return redirect()->route('two-factor.challenge');
         }
 

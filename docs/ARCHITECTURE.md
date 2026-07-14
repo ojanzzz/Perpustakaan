@@ -17,7 +17,7 @@ used for catalog metadata and aggregate statistics, never as the sole copy of da
 | Module | Responsibilities |
 |---|---|
 | Identity | Login, registration switch, verification, password reset, profile, 2FA boundary |
-| Authorization | role/admin level validation, granular permission resolution, middleware, gates, policies |
+| Authorization | three-level access validation, granular permission resolution, middleware, gates, policies |
 | Catalog | books, authors, publishers, languages, tags, categories, collections |
 | Content Workflow | draft, review, rejection notes, schedule, publish, archive, versions |
 | PDF Processing | validation, private storage, extraction, thumbnail, optimization, queue status |
@@ -36,7 +36,7 @@ erDiagram
     INSTITUTIONS ||--o{ USERS : has
     USERS ||--o{ USER_PERMISSIONS : overrides
     PERMISSIONS ||--o{ USER_PERMISSIONS : grants_or_denies
-    PERMISSIONS ||--o{ ADMIN_LEVEL_PERMISSIONS : assigned
+    PERMISSIONS ||--o{ ROLE_PERMISSIONS : assigned
 
     USERS ||--o{ BOOKS : creates
     USERS ||--o{ BOOK_VERSIONS : uploads
@@ -103,9 +103,13 @@ docs/
 
 `/login`, `/register` (setting-controlled), `/forgot-password`, `/verify-email`,
 `/profil`, `/favorit`, `/riwayat-baca`, `/bookmark`, `/koleksi-saya`, `/langganan`,
-`/notifikasi`, `/akun`, `/two-factor/setup`, dan `/two-factor/challenge`.
+`/notifikasi` dan `/akun`. Endpoint `/two-factor/setup` serta
+`/two-factor/challenge` hanya tersedia untuk superadmin.
 
 ### Admin web
+
+Seluruh route berikut hanya dapat diakses superadmin dan tetap dilindungi permission
+granular:
 
 `/admin`, `/admin/books`, `/admin/books/{book}/submit|return|publish|archive`,
 `/admin/collections`, `/admin/categories`, `/admin/users`,
@@ -120,8 +124,8 @@ dan `POST|DELETE /api/member/books/{book}/bookmarks[/{page}]`.
 
 ## 6. Daftar tabel
 
-Core identity: `users`, `institutions`, `permissions`,
-`admin_level_permissions`, `user_permissions`.
+Core identity: `users`, `institutions`, `permissions`, `role_permissions`,
+`user_permissions`.
 
 Catalog: `books`, `book_versions`, `book_reviews`, `categories`, `book_category`, `collections`,
 `book_collection`, `authors`, `book_author`, `publishers`, `tags`, `book_tag`,
@@ -135,9 +139,19 @@ Governance and operations: `feedback`, `announcements`, `audit_logs`, `backups`,
 `settings`, plus Laravel framework tables for sessions, cache, jobs, notifications,
 password resets, and failed jobs.
 
-The generic `roles`, `role_permissions`, and `user_roles` names in the older PRD are
-intentionally normalized to the user's later authoritative model: three fixed roles,
-four admin levels, `admin_level_permissions`, and `user_permissions`.
+Model akses tidak memakai tabel akun untuk pengunjung dan tidak memakai kolom
+`admin_level`. Nilai role final adalah `public`, `member`, dan `superadmin`:
+
+- `public` adalah konteks request tanpa baris pada tabel `users`;
+- `member` adalah akun anggota untuk fitur personal dan tidak dapat membuka dashboard;
+- `superadmin` adalah satu-satunya akun pengelola dashboard.
+
+`role_permissions` memetakan permission granular ke role superadmin. Override pada
+`user_permissions` dievaluasi hanya setelah role superadmin terverifikasi, sehingga
+baris override tidak dapat menaikkan privilege member. Migrasi upgrade mempertahankan
+member, mengubah admin lama berlevel superadmin menjadi role `superadmin`, serta
+memindahkan editor/content-admin/auditor lama menjadi member inactive tanpa menghapus
+riwayat auditnya.
 
 ## 7. Tahapan pengerjaan
 

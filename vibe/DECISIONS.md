@@ -54,3 +54,27 @@ Append-only architecture decision log.
 - Type: design
 - Decision: adapt the referenced left-hinged CSS book interaction only for reusable public book cards, with keyboard parity and static coarse-pointer/reduced-motion fallbacks.
 - Reason: adds a recognizable book interaction without changing navigation semantics, document assets, or the restrained government portal layout.
+
+---
+
+### D-008 — Simplify access to public, member, and superadmin
+
+- **Date**: 2026-07-14 · **Type**: scope-change
+- **Trigger**: user-requested access-level simplification
+- **Build stage**: post-completion
+- **What changed**: replace visitor/member/admin plus four admin levels with exactly
+  `public`, `member`, and `superadmin`.
+- **Why**: the user requested a simpler three-level operational model.
+- **Before**: public visitor, member account, and admin account with editor,
+  content-admin, auditor, or superadmin level.
+- **After**: unauthenticated public context, member account, and one superadmin account
+  type that owns all dashboard operations.
+- **Data migration**: retain members, promote legacy superadmin rows, and disable legacy
+  editor/content-admin/auditor rows without deleting their audit history.
+- **Tasks affected**: Retrofit AS-001-R through AS-005-R; no new product feature.
+- **Folders affected**: app authorization/auth/admin/reader layers, database migrations,
+  seeders/factories, views, routes, tests, and documentation.
+- **Architecture impact**: yes — remove `admin_level` and replace level mappings with
+  role permission mappings while keeping granular user overrides.
+- **BRIEF.md updated**: yes
+- **Approved by**: human

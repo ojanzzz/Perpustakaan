@@ -16,7 +16,7 @@ class TwoFactorController extends Controller
 {
     public function setup(Request $request, TotpService $totp): View
     {
-        abort_unless($request->user()->role === UserRole::Admin, 403);
+        $this->ensureSuperadmin($request);
         $secret = $request->user()->two_factor_secret ?: $request->session()->get('two_factor.pending_secret', $totp->generateSecret());
         $request->session()->put('two_factor.pending_secret', $secret);
 
@@ -25,7 +25,7 @@ class TwoFactorController extends Controller
 
     public function enable(Request $request, TotpService $totp, AuditRecorder $audit): RedirectResponse
     {
-        abort_unless($request->user()->role === UserRole::Admin, 403);
+        $this->ensureSuperadmin($request);
         $data = $request->validate(['code' => ['required', 'digits:6']]);
         $secret = (string) $request->session()->get('two_factor.pending_secret');
         if (! $secret || ! $totp->verify($secret, $data['code'])) {
@@ -45,13 +45,16 @@ class TwoFactorController extends Controller
         return redirect('/admin')->with('status', 'Autentikasi dua faktor telah aktif. Simpan kode pemulihan.');
     }
 
-    public function challenge(): View
+    public function challenge(Request $request): View
     {
+        $this->ensureSuperadmin($request);
+
         return view('auth.two-factor-challenge');
     }
 
     public function confirm(Request $request, TotpService $totp, AuditRecorder $audit): RedirectResponse
     {
+        $this->ensureSuperadmin($request);
         $data = $request->validate(['code' => ['required', 'string', 'max:20']]);
         $user = $request->user();
         $valid = $user->two_factor_secret && $totp->verify($user->two_factor_secret, preg_replace('/\D/', '', $data['code']));
@@ -78,11 +81,17 @@ class TwoFactorController extends Controller
 
     public function disable(Request $request, AuditRecorder $audit): RedirectResponse
     {
+        $this->ensureSuperadmin($request);
         $data = $request->validate(['password' => ['required', 'current_password']]);
         $request->user()->forceFill(['two_factor_secret' => null, 'two_factor_recovery_codes' => null, 'two_factor_enabled_at' => null])->save();
         $request->session()->forget('two_factor.confirmed_at');
         $audit->record('security.2fa.disabled', $request->user(), null, ['password_confirmed' => isset($data['password'])]);
 
         return back()->with('status', 'Autentikasi dua faktor dinonaktifkan.');
+    }
+
+    private function ensureSuperadmin(Request $request): void
+    {
+        abort_unless($request->user()?->role === UserRole::Superadmin, 403);
     }
 }

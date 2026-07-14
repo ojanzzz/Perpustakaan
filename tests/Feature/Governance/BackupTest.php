@@ -4,7 +4,6 @@ namespace Tests\Feature\Governance;
 
 use App\Domain\Backup\BackupService;
 use App\Domain\Backup\RestoreService;
-use App\Enums\AdminLevel;
 use App\Enums\UserRole;
 use App\Jobs\RunBackup;
 use App\Models\Backup;
@@ -20,14 +19,14 @@ class BackupTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_only_authorized_admin_can_trigger_backup(): void
+    public function test_only_superadmin_can_trigger_backup(): void
     {
         $this->seed(PermissionSeeder::class);
         Queue::fake();
-        $superadmin = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::Superadmin]);
-        $auditor = User::factory()->create(['role' => UserRole::Admin, 'admin_level' => AdminLevel::Auditor]);
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+        $member = User::factory()->create(['role' => UserRole::Member]);
 
-        $this->actingAs($auditor)->post('/admin/backups')->assertForbidden();
+        $this->actingAs($member)->post('/admin/backups')->assertForbidden();
         $this->actingAs($superadmin)->post('/admin/backups', ['type' => 'database'])->assertRedirect('/admin/backups');
 
         $backup = Backup::query()->latest('id')->firstOrFail();

@@ -13,7 +13,7 @@ class EnsureAdminTwoFactor
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();
-        if ($user?->role !== UserRole::Admin) {
+        if ($user?->role !== UserRole::Superadmin) {
             return $next($request);
         }
         if (! $user->two_factor_enabled_at) {

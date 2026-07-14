@@ -30,7 +30,6 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('role', 20)->default('member')->index();
-            $table->string('admin_level', 30)->nullable()->index();
             $table->string('status', 20)->default('active')->index();
             $table->timestamp('last_login_at')->nullable();
             $table->rememberToken();

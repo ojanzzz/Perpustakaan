@@ -1,6 +1,6 @@
 # Codebase — E-PERPUSTAKAAN DIGITAL KPU
 
-> 2026-07-14 · Verified during book-card cover animation planning.
+> 2026-07-14 · Updated for the final three-level access model.
 
 ## Runtime
 
@@ -11,14 +11,15 @@
 
 ## Foundation and content boundaries
 
-- `app/Enums`: authoritative user role, admin level, and account status values.
+- `app/Enums`: authoritative `public`/`member`/`superadmin` role and account status values.
 - `app/Domain/Authorization/PermissionService.php`: capability resolution.
 - `app/Http/Middleware/RequirePermission.php`: route-level permission enforcement.
-- `app/Policies/UserPolicy.php`: target-aware member/admin account authorization.
+- `app/Policies/UserPolicy.php`: target-aware member/superadmin account authorization.
 - `app/Http/Controllers/Auth`: login, registration, reset, verification.
 - `app/Models/User.php`: role invariant and permission override relation.
 - `database/migrations`: identity, authorization, catalog, engagement, governance schema.
-- `database/seeders`: permissions, level mappings, settings, non-production demo admins.
+- `database/seeders`: permissions, role mappings, settings, and non-production
+  superadmin/member demo accounts.
 - `tests/Feature/Foundation`: fresh schema and behavior contracts.
 - `app/Models/Book.php` and catalog models: metadata and many-to-many taxonomy relations.
 - `app/Domain/Documents`: PDF validation and atomic private-file ingestion.
@@ -46,14 +47,20 @@
 ## Permission precedence
 
 1. Inactive/suspended or missing user: deny.
-2. Explicit `user_permissions` row: return its `allowed` value.
-3. Admin level mapping: allow when present.
-4. Otherwise: deny.
+2. Any role other than `superadmin`: deny administrative permissions.
+3. Explicit `user_permissions` row for a superadmin: return its `allowed` value.
+4. Superadmin `role_permissions` mapping: allow when present.
+5. Otherwise: deny.
+
+Public access is an unauthenticated request context, not a persisted user. The `users`
+table has no `admin_level`; fresh installs use `role_permissions`. During upgrades,
+legacy superadmin rows become role `superadmin`, while editor/content-admin/auditor rows
+become inactive members so their audit relationships remain intact.
 
 ## Current routes
 
 Home, login/logout, setting-controlled registration, password reset, email verification,
-dashboard `/admin`, book management `/admin/books`, category management
+superadmin-only dashboard `/admin`, book management `/admin/books`, category management
 `/admin/categories`, and collection management `/admin/collections`. Every admin mutation
 uses granular permission middleware; resource policies share the same permission service.
 

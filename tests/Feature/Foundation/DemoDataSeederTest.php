@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Foundation;
 
-use App\Enums\AdminLevel;
 use App\Enums\UserRole;
 use App\Models\Book;
 use App\Models\Category;
@@ -10,6 +9,7 @@ use App\Models\PersonalCollection;
 use App\Models\User;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\DemoActivitySeeder;
+use Database\Seeders\DemoAdminSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -19,31 +19,32 @@ class DemoDataSeederTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_development_seed_creates_each_admin_level_and_permission_mapping(): void
+    public function test_development_seed_creates_only_superadmin_and_member_demo_accounts(): void
     {
         $this->seed(DatabaseSeeder::class);
 
-        foreach (AdminLevel::cases() as $level) {
-            $this->assertDatabaseHas('users', [
-                'role' => UserRole::Admin->value,
-                'admin_level' => $level->value,
-                'status' => 'active',
-            ]);
-            $this->assertSame(1, User::query()->where('admin_level', $level)->count());
-        }
+        $this->assertSame(1, User::query()->where('role', UserRole::Superadmin)->count());
+        $this->assertSame(1, User::query()->where('role', UserRole::Member)->count());
+        $this->assertSame(0, User::query()->where('role', UserRole::Public)->count());
+        $this->assertDatabaseCount('users', 2);
+        $this->assertDatabaseHas('users', [
+            'email' => 'superadmin@demo.test',
+            'role' => UserRole::Superadmin->value,
+            'status' => 'active',
+        ]);
+        $this->assertDatabaseHas('users', [
+            'email' => 'member@demo.test',
+            'role' => UserRole::Member->value,
+            'status' => 'active',
+        ]);
 
         $this->assertGreaterThanOrEqual(20, DB::table('permissions')->count());
-        $this->assertTrue(
-            User::query()->where('admin_level', AdminLevel::Editor)->firstOrFail()
-                ->can('books.create')
-        );
-        $this->assertFalse(
-            User::query()->where('admin_level', AdminLevel::Editor)->firstOrFail()
-                ->can('books.publish')
-        );
+        $this->assertSame(DB::table('permissions')->count(), DB::table('role_permissions')->count());
+        $this->assertDatabaseMissing('role_permissions', ['role' => UserRole::Member->value]);
+        $this->assertDatabaseMissing('role_permissions', ['role' => UserRole::Public->value]);
         $this->assertTrue(Hash::check(
             'KpuDemo!2026',
-            User::query()->where('admin_level', AdminLevel::Superadmin)->firstOrFail()->password
+            User::query()->where('role', UserRole::Superadmin)->firstOrFail()->password
         ));
     }
 
@@ -72,6 +73,23 @@ class DemoDataSeederTest extends TestCase
         $this->assertDatabaseHas('search_logs', [
             'normalized_query' => 'jadwal pemilu luar negeri',
             'result_count' => 0,
+        ]);
+    }
+
+    public function test_demo_admin_seed_disables_accounts_from_removed_demo_levels(): void
+    {
+        $legacyDemoAccount = User::factory()->create([
+            'email' => 'editor@demo.test',
+            'role' => UserRole::Member,
+            'status' => 'active',
+        ]);
+
+        $this->seed(DemoAdminSeeder::class);
+
+        $this->assertDatabaseHas('users', [
+            'id' => $legacyDemoAccount->id,
+            'role' => UserRole::Member->value,
+            'status' => 'inactive',
         ]);
     }
 

@@ -34,14 +34,18 @@ class PublicBookAccessTest extends TestCase
             $service->discoverableQuery($member)->pluck('id')->all(),
         );
 
-        $visitorAccount = User::factory()->create(['role' => UserRole::Visitor]);
-        $this->assertEqualsCanonicalizing([$public->id], $service->discoverableQuery($visitorAccount)->pluck('id')->all());
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
+        $this->assertEqualsCanonicalizing(
+            [$public->id, $memberOnly->id],
+            $service->discoverableQuery($superadmin)->pluck('id')->all(),
+        );
     }
 
     public function test_direct_access_supports_unlisted_verified_member_and_password_rules_without_exposing_private_books(): void
     {
         $service = app(BookAccessService::class);
         $member = User::factory()->create();
+        $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
         $unverified = User::factory()->unverified()->create();
 
         $unlisted = $this->publishedBook(['visibility' => BookVisibility::Unlisted]);
@@ -58,6 +62,7 @@ class PublicBookAccessTest extends TestCase
         $this->assertFalse($service->canView($password));
         $this->assertTrue($service->canView($password, passwordUnlocked: true));
         $this->assertFalse($service->canView($private, $member));
+        $this->assertTrue($service->canView($private, $superadmin));
     }
 
     private function publishedBook(array $attributes = []): Book

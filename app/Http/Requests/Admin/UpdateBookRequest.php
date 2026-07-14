@@ -30,6 +30,7 @@ class UpdateBookRequest extends FormRequest
             'visibility' => ['required', Rule::enum(BookVisibility::class)],
             'download_enabled' => ['sometimes', 'boolean'],
             'print_enabled' => ['sometimes', 'boolean'],
+            'pdf' => ['nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:'.config('pdf.max_upload_kb')],
             'category_ids' => ['sometimes', 'array'],
             'category_ids.*' => ['integer', 'exists:categories,id'],
             'collection_ids' => ['sometimes', 'array'],

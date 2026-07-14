@@ -79,7 +79,7 @@ class MemberLibraryController extends Controller
         $user = $request->user();
         abort_unless(
             $user && $user->status === AccountStatus::Active
-            && in_array($user->role, [UserRole::Member, UserRole::Admin], true),
+            && in_array($user->role, [UserRole::Member, UserRole::Superadmin], true),
             403,
         );
         $unlocked = $request->hasSession()

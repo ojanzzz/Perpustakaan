@@ -69,7 +69,8 @@ Pastikan `QUEUE_CONNECTION=database`, lalu cek tabel `jobs` dan `failed_jobs`.
 
 Gunakan `APP_ENV=production`, `APP_DEBUG=false`, URL HTTPS, `SESSION_SECURE_COOKIE=true`,
 password database unik, SMTP tervalidasi, dan `LOG_LEVEL=warning`. Jangan menjalankan
-`DemoAdminSeeder` di production. Aktifkan 2FA admin dari dashboard setelah akun produksi dibuat.
+`DemoAdminSeeder` di production. Aktifkan 2FA superadmin dari dashboard setelah akun
+produksi dibuat; member tidak memiliki akses dashboard.
 
 ## Backup dan pemulihan
 

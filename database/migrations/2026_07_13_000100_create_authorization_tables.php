@@ -16,10 +16,10 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        Schema::create('admin_level_permissions', function (Blueprint $table) {
-            $table->string('admin_level', 30);
+        Schema::create('role_permissions', function (Blueprint $table) {
+            $table->string('role', 20);
             $table->foreignId('permission_id')->constrained()->cascadeOnDelete();
-            $table->primary(['admin_level', 'permission_id']);
+            $table->primary(['role', 'permission_id']);
         });
 
         Schema::create('user_permissions', function (Blueprint $table) {
@@ -34,6 +34,7 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('user_permissions');
+        Schema::dropIfExists('role_permissions');
         Schema::dropIfExists('admin_level_permissions');
         Schema::dropIfExists('permissions');
     }

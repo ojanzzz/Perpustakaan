@@ -11,12 +11,15 @@ Tahap 1–6 telah diimplementasikan dan menyediakan:
 - Laravel 13.19, PHP 8.3+, Livewire 4, Tailwind CSS 4, dan Vite 8;
 - seluruh migration tabel domain wajib dari database kosong;
 - autentikasi login/logout, registrasi setting-controlled, reset password, verifikasi email;
-- tiga role tetap dan empat level admin dengan invariansi model;
-- permission granular melalui mapping admin level, override pengguna, middleware, dan Gate;
-- permission, pengaturan awal, serta empat akun admin demo untuk non-production;
+- tepat tiga level akses: `public` sebagai konteks tanpa akun, `member` sebagai akun
+  anggota, dan `superadmin` sebagai satu-satunya akun pengelola;
+- permission granular melalui `role_permissions`, override `user_permissions` khusus
+  superadmin, middleware, policy, dan Gate;
+- permission, pengaturan awal, serta satu akun superadmin dan satu akun member demo
+  untuk non-production;
 - model, relasi, factory, serta seeder demo idempoten untuk katalog dan aktivitas
   (10 kategori, 5 rak, 20 buku, statistik, riwayat anggota, feedback, dan audit log);
-- dashboard administrator, pencarian/pagination buku, serta CRUD kategori dan koleksi;
+- dashboard khusus superadmin, pencarian/pagination buku, serta CRUD kategori dan koleksi;
 - unggah PDF privat dengan validasi MIME/signature/struktur, nama UUID, progress upload,
   versioning awal, dan queue pemrosesan metadata/sampul WebP;
 - status pemrosesan dan pesan kegagalan yang dapat dipantau dari dashboard;
@@ -34,10 +37,12 @@ Tahap 1–6 telah diimplementasikan dan menyediakan:
 - area anggota: profil, password, favorit, bookmark, riwayat, halaman terakhir, koleksi
   pribadi, langganan kategori, notifikasi buku baru, dan penghapusan akun;
 - sharing, QR code, dan embed buku/rak/kategori dengan allowlist domain;
-- alur persetujuan draft → tinjauan → dikembalikan/terbit/terjadwal → arsip beserta catatan;
+- alur draft → tinjauan → dikembalikan/terbit/terjadwal → arsip beserta catatan yang
+  seluruhnya dikelola superadmin;
 - statistik privasi-sadar dan ekspor CSV/XLSX/PDF, feedback/laporan, audit log immutable;
 - backup database melalui queue/CLI/scheduler dengan ZIP, manifest, checksum, dan status;
-- pengelolaan pengguna, level admin, permission override, registrasi, domain embed, dan 2FA;
+- pengelolaan akun member/superadmin, permission override superadmin, registrasi member,
+  domain embed, dan 2FA superadmin;
 - PWA, service worker, CSP/header keamanan, SEO, aksesibilitas, dan UI responsif;
 - automated tests untuk fondasi, autentikasi, permission, katalog, PDF, reader, member,
   workflow, analytics, audit, backup, embed, PWA, 2FA, dan administrasi sistem.

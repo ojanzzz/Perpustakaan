@@ -21,6 +21,13 @@ class PermissionService
             return false;
         }
 
+        // Permission dashboard hanya berlaku untuk akun superadmin. Pemeriksaan
+        // role harus mendahului override agar user_permissions tidak dapat
+        // menaikkan hak akses akun member.
+        if ($user->role !== UserRole::Superadmin) {
+            return false;
+        }
+
         $override = DB::table('user_permissions')
             ->where('user_id', $user->getKey())
             ->where('permission_id', $permissionId)
@@ -30,12 +37,8 @@ class PermissionService
             return (bool) $override->allowed;
         }
 
-        if ($user->role !== UserRole::Admin || $user->admin_level === null) {
-            return false;
-        }
-
-        return DB::table('admin_level_permissions')
-            ->where('admin_level', $user->admin_level->value)
+        return DB::table('role_permissions')
+            ->where('role', UserRole::Superadmin->value)
             ->where('permission_id', $permissionId)
             ->exists();
     }

@@ -132,6 +132,7 @@ Route::prefix('admin')->middleware(['auth', 'admin.2fa'])->group(function (): vo
     Route::get('/books/{book}/edit', [BookController::class, 'edit'])->middleware('permission:books.update')->name('admin.books.edit');
     Route::put('/books/{book}', [BookController::class, 'update'])->middleware('permission:books.update')->name('admin.books.update');
     Route::delete('/books/{book}', [BookController::class, 'destroy'])->middleware('permission:books.delete')->name('admin.books.destroy');
+    Route::delete('/books/{book}/force', [BookController::class, 'forceDelete'])->middleware('permission:books.force_delete')->name('admin.books.force_delete');
     Route::post('/books/{book}/submit', [BookWorkflowController::class, 'submit'])->middleware('permission:books.submit')->name('admin.books.submit');
     Route::post('/books/{book}/return', [BookWorkflowController::class, 'return'])->middleware('permission:books.review')->name('admin.books.return');
     Route::post('/books/{book}/publish', [BookWorkflowController::class, 'publish'])->middleware('permission:books.publish')->name('admin.books.publish');
