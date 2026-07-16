@@ -12,6 +12,40 @@ class AccessLevelUpgradeMigrationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_upgrade_migration_repairs_users_table_from_older_installations(): void
+    {
+        Schema::table('users', function (Blueprint $table): void {
+            $table->dropIndex(['role']);
+            $table->dropIndex(['status']);
+        });
+
+        Schema::table('users', function (Blueprint $table): void {
+            $table->dropColumn(['role', 'status']);
+        });
+
+        $this->assertFalse(Schema::hasColumn('users', 'role'));
+        $this->assertFalse(Schema::hasColumn('users', 'status'));
+
+        DB::table('users')->insert([
+            'name' => 'Legacy Member',
+            'email' => 'legacy-member@example.test',
+            'password' => 'legacy-password',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $migration = require database_path('migrations/2026_07_14_000900_simplify_access_levels.php');
+        $migration->up();
+
+        $this->assertTrue(Schema::hasColumn('users', 'role'));
+        $this->assertTrue(Schema::hasColumn('users', 'status'));
+        $this->assertDatabaseHas('users', [
+            'email' => 'legacy-member@example.test',
+            'role' => 'member',
+            'status' => 'active',
+        ]);
+    }
+
     public function test_upgrade_migration_converts_legacy_access_data_and_permissions(): void
     {
         Schema::dropIfExists('role_permissions');

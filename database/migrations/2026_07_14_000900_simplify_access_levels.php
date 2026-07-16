@@ -9,6 +9,21 @@ return new class extends Migration
 {
     public function up(): void
     {
+        $missingRole = ! Schema::hasColumn('users', 'role');
+        $missingStatus = ! Schema::hasColumn('users', 'status');
+
+        if ($missingRole || $missingStatus) {
+            Schema::table('users', function (Blueprint $table) use ($missingRole, $missingStatus): void {
+                if ($missingRole) {
+                    $table->string('role', 20)->default('member')->index();
+                }
+
+                if ($missingStatus) {
+                    $table->string('status', 20)->default('active')->index();
+                }
+            });
+        }
+
         if (! Schema::hasTable('role_permissions')) {
             Schema::create('role_permissions', function (Blueprint $table): void {
                 $table->string('role', 20);
