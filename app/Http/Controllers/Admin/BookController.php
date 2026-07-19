@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Domain\Documents\PdfIngestionService;
+use App\Enums\ProcessingStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBookRequest;
 use App\Http\Requests\Admin\UpdateBookRequest;
@@ -41,19 +42,23 @@ class BookController extends Controller
     {
         try {
             if ($request->filled('pdf_url')) {
-                $service->createPublishedFromUrl(
+                $book = $service->createPublishedFromUrl(
                     $request->safe()->except(['pdf', 'pdf_url']),
                     $request->input('pdf_url'),
                     $request->user()
                 );
             } else {
-                $service->createPublished($request->safe()->except('pdf'), $request->file('pdf'), $request->user());
+                $book = $service->createPublished($request->safe()->except('pdf'), $request->file('pdf'), $request->user());
             }
         } catch (\RuntimeException $exception) {
             throw ValidationException::withMessages(['pdf' => $exception->getMessage()]);
         }
 
-        return redirect('/admin/books')->with('status', 'Buku berhasil diterbitkan dan PDF masuk antrean pemrosesan.');
+        $message = $book->processing_status === ProcessingStatus::Completed
+            ? 'Buku berhasil diterbitkan dan PDF selesai diproses.'
+            : 'Buku berhasil diterbitkan, tetapi cover PDF gagal dibuat. Periksa status pemrosesan.';
+
+        return redirect('/admin/books')->with('status', $message);
     }
 
     public function edit(Book $book): View
@@ -71,9 +76,12 @@ class BookController extends Controller
     {
         try {
             if ($request->hasFile('pdf')) {
-                $service->replacePdf($book, $request->file('pdf'), $request->user());
+                $book = $service->replacePdf($book, $request->file('pdf'), $request->user());
+                $message = $book->processing_status === ProcessingStatus::Completed
+                    ? 'Dokumen buku diganti dan PDF selesai diproses.'
+                    : 'Dokumen buku diganti, tetapi cover PDF gagal dibuat. Cover sebelumnya tetap digunakan.';
 
-                return redirect('/admin/books')->with('status', 'Dokumen buku diganti dan masuk antrean pemrosesan.');
+                return redirect('/admin/books')->with('status', $message);
             }
 
             $data = $request->validated();

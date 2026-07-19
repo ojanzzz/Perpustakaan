@@ -73,9 +73,9 @@ class PdfIngestionService
         }
 
         $this->publicationNotifier->notify($book);
-        ProcessPdf::dispatch($book->id)->afterCommit();
+        ProcessPdf::dispatchSync($book->id);
 
-        return $book;
+        return $book->refresh();
     }
 
     /** @param array<string, mixed> $data */
@@ -133,15 +133,15 @@ class PdfIngestionService
             }
 
             $this->publicationNotifier->notify($book);
-            ProcessPdf::dispatch($book->id)->afterCommit();
+            ProcessPdf::dispatchSync($book->id);
 
-            return $book;
+            return $book->refresh();
         } finally {
             @unlink($tempPath);
         }
     }
 
-    public function replacePdf(Book $book, UploadedFile $pdf, User $actor): void
+    public function replacePdf(Book $book, UploadedFile $pdf, User $actor): Book
     {
         $probe = $this->validator->probeUpload($pdf);
         $directory = 'books/'.Str::uuid();
@@ -154,7 +154,6 @@ class PdfIngestionService
 
         $oldOriginal = $book->original_file;
         $oldOptimized = $book->optimized_file;
-        $oldCover = $book->cover_image;
 
         try {
             DB::transaction(function () use ($book, $pdf, $actor, $probe, $newPath): void {
@@ -187,9 +186,11 @@ class PdfIngestionService
             throw $exception;
         }
 
-        $this->deleteReplacedFiles($oldOriginal, $oldOptimized, $oldCover);
+        $this->deleteReplacedFiles($oldOriginal, $oldOptimized, null);
 
-        ProcessPdf::dispatch($book->id)->afterCommit();
+        ProcessPdf::dispatchSync($book->id);
+
+        return $book->refresh();
     }
 
     private function deleteReplacedFiles(?string $original, ?string $optimized, ?string $cover): void
