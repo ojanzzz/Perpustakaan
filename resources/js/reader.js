@@ -48,6 +48,7 @@ if (root) {
     let scrollObserver;
     let scrollNavigationUntil = 0;
     let scrollAlignmentTimers = [];
+    let flipRenderGeneration = 0;
 
     root.classList.toggle('sidebar-closed', !state.sidebar);
     sidebar.inert = !state.sidebar;
@@ -115,10 +116,13 @@ if (root) {
 
     function availableScale(page, spread = false) {
         const base = page.getViewport({scale: 1});
+        const controlBarHeight = controlBar.getBoundingClientRect().height || (window.matchMedia('(max-width: 767px)').matches ? 40 : 50);
+        const filmstripHeight = filmstripTrack.getBoundingClientRect().height || 0;
+        const verticalPadding = Math.max(controlBarHeight + 12, filmstripHeight + 24);
         const compact = window.matchMedia('(max-width: 767px)').matches;
-        const width = Math.max(240, stage.clientWidth - (compact ? 52 : 184)) / (spread ? 2 : 1);
-        const height = Math.max(280, stage.clientHeight - (compact ? 126 : 150));
-        const fitWidth = (width - (compact ? 2 : 10)) / base.width;
+        const width = Math.max(200, stage.clientWidth - (compact ? 40 : 160)) / (spread ? 2 : 1);
+        const height = Math.max(260, stage.clientHeight - verticalPadding);
+        const fitWidth = (width - (compact ? 4 : 12)) / base.width;
         const fitPage = Math.min(fitWidth, height / base.height);
         return (state.fit === 'width' ? fitWidth : fitPage) * state.zoom;
     }
@@ -165,6 +169,7 @@ if (root) {
     }
 
     async function initFlipBook() {
+        const renderGeneration = ++flipRenderGeneration;
         if (state.pageFlip) {
             state.pageFlip.destroy();
             state.pageFlip = null;
@@ -172,28 +177,27 @@ if (root) {
         flipViewport.hidden = false;
         scrollViewport.hidden = true;
 
-        const compact = window.matchMedia('(max-width: 767px)').matches;
         const stageWidth = stage.clientWidth;
         const stageHeight = stage.clientHeight;
         const basePage = await getPage(1);
-        const baseViewport = basePage.getViewport({scale: 1});
-        const availableWidth = Math.max(240, stageWidth - (compact ? 52 : 184)) / (state.spread ? 2 : 1);
-        const availableHeight = Math.max(280, stageHeight - (compact ? 126 : 150));
-        const fitWidthScale = (availableWidth - (compact ? 2 : 10)) / baseViewport.width;
-        const fitPageScale = Math.min(fitWidthScale, availableHeight / baseViewport.height);
-        const scale = Math.max(0.1, (state.fit === 'width' ? fitWidthScale : fitPageScale) * state.zoom);
-        const pageWidth = Math.max(200, Math.floor(baseViewport.width * scale));
-        const pageHeight = Math.max(280, Math.floor(baseViewport.height * scale));
+        const scale = availableScale(basePage, state.spread);
+        const viewport = basePage.getViewport({scale: Math.max(0.1, scale)});
+        const pageWidth = Math.max(200, Math.floor(viewport.width));
+        const pageHeight = Math.max(260, Math.floor(viewport.height));
 
         const bookEl = document.createElement('div');
         bookEl.className = 'flip-book';
+        bookEl.style.height = `${pageHeight}px`;
         const pageImages = [];
 
         for (let i = 1; i <= state.total; i++) {
+            if (renderGeneration !== flipRenderGeneration) return;
             try {
                 const canvas = await canvasForPage(i, state.spread ? 'spread' : 'page');
+                if (renderGeneration !== flipRenderGeneration) return;
                 pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
             } catch {
+                if (renderGeneration !== flipRenderGeneration) return;
                 const fallback = document.createElement('canvas');
                 fallback.width = pageWidth;
                 fallback.height = pageHeight;
@@ -207,6 +211,8 @@ if (root) {
                 pageImages.push(fallback.toDataURL('image/jpeg', 0.92));
             }
         }
+
+        if (renderGeneration !== flipRenderGeneration) return;
 
         flipViewport.innerHTML = '';
         flipViewport.appendChild(bookEl);
@@ -284,6 +290,7 @@ if (root) {
 
     async function showMode(scrollToPage = false) {
         if (state.mode === 'scroll') {
+            flipRenderGeneration += 1;
             state.pageFlip?.destroy();
             state.pageFlip = null;
             state.flipBookSpread = null;
@@ -604,12 +611,17 @@ if (root) {
             if (state.mode === 'flip' && Math.abs(distance) > 55) perform(distance < 0 ? 'next' : 'previous');
         }, {passive: true});
         window.addEventListener('resize', () => {
-        clearTimeout(window.readerResizeTimer);
-        window.readerResizeTimer = setTimeout(() => {
-            if (!state.pdf) return;
-            const compact = window.matchMedia('(max-width: 767px)').matches;
-                state.spread = compact ? false : (state.spreadPreference ?? true);
+            clearTimeout(window.readerResizeTimer);
+            window.readerResizeTimer = setTimeout(() => {
+                if (!state.pdf) return;
+                const compact = window.matchMedia('(max-width: 767px)').matches;
+                const tablet = window.matchMedia('(min-width: 768px) and (max-width: 1024px)').matches;
+                state.spread = compact ? false : (tablet ? state.spreadPreference ?? false : state.spreadPreference ?? true);
                 if (compact) state.mode = 'flip';
+                if (state.mode === 'flip') {
+                    state.pageFlip?.destroy();
+                    state.pageFlip = null;
+                }
                 showMode(true);
             }, 180);
         });

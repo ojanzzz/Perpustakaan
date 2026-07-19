@@ -2,9 +2,10 @@
 <html lang="id" data-reader-theme="dark">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
     <meta name="robots" content="noindex, nofollow">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    <meta name="theme-color" content="#303030">
     <title>{{ $book->title }} - Pembaca Digital</title>
     @vite(['resources/css/reader.css', 'resources/js/reader.js'])
     <script src="{{ asset('vendor/qrcode/qrcode.min.js') }}" defer></script>

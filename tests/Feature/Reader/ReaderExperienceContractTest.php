@@ -49,6 +49,13 @@ class ReaderExperienceContractTest extends TestCase
         $this->assertStringContainsString('const currentIndex = state.pageFlip.getCurrentPageIndex()', $javascript);
         $this->assertStringNotContainsString('getCurrentPageIndex().then', $javascript);
         $this->assertStringContainsString('if (!state.pdf) return;', $javascript);
+        $this->assertStringContainsString('bookEl.style.height = `${pageHeight}px`', $javascript);
+        $this->assertStringContainsString('let flipRenderGeneration = 0', $javascript);
+        $this->assertStringContainsString('const renderGeneration = ++flipRenderGeneration', $javascript);
+        $this->assertStringContainsString('if (renderGeneration !== flipRenderGeneration) return;', $javascript);
+        $this->assertMatchesRegularExpression('/for \(let i = 1; i <= state\.total; i\+\+\) \{\s*if \(renderGeneration !== flipRenderGeneration\) return;/s', $javascript);
+        $this->assertMatchesRegularExpression('/if \(state\.mode === \'scroll\'\) \{\s*flipRenderGeneration \+= 1;\s*state\.pageFlip\?\.destroy\(\);/s', $javascript);
+        $this->assertMatchesRegularExpression('/window\.addEventListener\(\'resize\'.*if \(state\.mode === \'flip\'\) \{\s*state\.pageFlip\?\.destroy\(\);\s*state\.pageFlip = null;\s*\}\s*showMode\(true\);/s', $javascript);
         $this->assertStringContainsString("const controlBar = $('.reader-control-bar')", $javascript);
         $this->assertStringContainsString('reader-controls-hidden', $javascript);
         $this->assertStringContainsString("root.addEventListener('pointermove'", $javascript);
@@ -60,10 +67,10 @@ class ReaderExperienceContractTest extends TestCase
         $this->assertStringContainsString('.reader-zoom-range', $css);
         $this->assertStringContainsString('.filmstrip-thumbnail.is-current', $css);
         $this->assertMatchesRegularExpression('/\.reader-control-bar[^}]*position:\s*fixed/s', $css);
-        $this->assertMatchesRegularExpression('/\.reader-control-bar[^}]*top:\s*10px/s', $css);
-        $this->assertMatchesRegularExpression('/\.reader-stage[^}]*position:\s*absolute[^}]*inset:\s*0/s', $css);
-        $this->assertMatchesRegularExpression('/\.reader-filmstrip[^}]*position:\s*fixed[^}]*bottom:\s*8px/s', $css);
-        $this->assertMatchesRegularExpression('/\.reader-filmstrip[^}]*height:\s*52px/s', $css);
+        $this->assertMatchesRegularExpression('/\.reader-control-bar[^}]*top:\s*max\(10px/s', $css);
+        $this->assertMatchesRegularExpression('/\.reader-stage[^}]*position:\s*relative[^}]*grid-row:\s*1\s*\/\s*-1/s', $css);
+        $this->assertMatchesRegularExpression('/\.reader-filmstrip[^}]*position:\s*fixed[^}]*bottom:\s*max\(8px/s', $css);
+        $this->assertMatchesRegularExpression('/\.reader-filmstrip[^}]*height:\s*44px/s', $css);
         $this->assertMatchesRegularExpression('/\.reader-stage[^}]*background:\s*#303030/s', $css);
         $this->assertStringContainsString('@media (max-width: 767px)', $css);
         $this->assertStringContainsString('.fit-width-active .flip-viewport', $css);
