@@ -37,15 +37,14 @@ Tahap 1–6 telah diimplementasikan dan menyediakan:
 - area anggota: profil, password, favorit, bookmark, riwayat, halaman terakhir, koleksi
   pribadi, langganan kategori, notifikasi buku baru, dan penghapusan akun;
 - sharing, QR code, dan embed buku/rak/kategori dengan allowlist domain;
-- alur draft → tinjauan → dikembalikan/terbit/terjadwal → arsip beserta catatan yang
-  seluruhnya dikelola superadmin;
+- penerbitan langsung setelah upload PDF valid, tanpa workflow review/publish/archive manual;
 - statistik privasi-sadar dan ekspor CSV/XLSX/PDF, feedback/laporan, audit log immutable;
 - backup database melalui queue/CLI/scheduler dengan ZIP, manifest, checksum, dan status;
 - pengelolaan akun member/superadmin, permission override superadmin, registrasi member,
   domain embed, dan 2FA superadmin;
 - PWA, service worker, CSP/header keamanan, SEO, aksesibilitas, dan UI responsif;
 - automated tests untuk fondasi, autentikasi, permission, katalog, PDF, reader, member,
-  workflow, analytics, audit, backup, embed, PWA, 2FA, dan administrasi sistem.
+  penerbitan langsung, analytics, audit, backup, embed, PWA, 2FA, dan administrasi sistem.
 
 ## Persyaratan
 

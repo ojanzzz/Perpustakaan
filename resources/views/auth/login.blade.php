@@ -4,7 +4,7 @@
             <h1 class="text-3xl font-bold tracking-tight">Masuk</h1>
             <p class="mt-2 text-sm text-slate-600">Gunakan akun anggota atau administrator Anda.</p>
 
-            <form action="/login" method="POST" class="mt-8 space-y-5">
+            <form action="login" method="POST" class="mt-8 space-y-5">
                 @csrf
                 <div>
                     <label for="email" class="block text-sm font-medium">Email</label>
@@ -28,4 +28,3 @@
         </div>
     </section>
 </x-layouts.app>
-

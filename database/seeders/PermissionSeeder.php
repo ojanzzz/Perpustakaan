@@ -13,9 +13,8 @@ class PermissionSeeder extends Seeder
     private array $permissions = [
         'dashboard.view' => 'dashboard',
         'books.view' => 'books', 'books.create' => 'books', 'books.update' => 'books',
-        'books.upload' => 'books', 'books.preview' => 'books', 'books.submit' => 'books',
-        'books.review' => 'books', 'books.publish' => 'books', 'books.schedule' => 'books',
-        'books.archive' => 'books', 'books.delete' => 'books', 'books.force_delete' => 'books',
+        'books.upload' => 'books', 'books.preview' => 'books',
+        'books.delete' => 'books', 'books.force_delete' => 'books',
         'books.versions' => 'books', 'taxonomy.manage' => 'catalog',
         'announcements.manage' => 'content', 'feedback.manage' => 'content',
         'analytics.view' => 'analytics', 'analytics.export' => 'analytics',

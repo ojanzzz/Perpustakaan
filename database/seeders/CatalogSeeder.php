@@ -71,7 +71,7 @@ class CatalogSeeder extends Seeder
             'Sejarah Penyelenggaraan Pemilu', 'Pengawasan Partisipatif', 'Manajemen Dokumen Publik',
             'Kamus Istilah Kepemiluan', 'Catatan Literasi Demokrasi',
         ];
-        $covers = ['civic-red.webp', 'participation-navy.webp', 'election-data.webp', 'archive-gold.webp'];
+        $firstPageCover = 'images/demo-covers/demo-reader-first-page.webp';
         $types = ['Panduan', 'Modul', 'Laporan', 'Referensi'];
 
         foreach ($titles as $index => $title) {
@@ -91,7 +91,7 @@ class CatalogSeeder extends Seeder
                 'original_file' => $demoPdfPath,
                 'optimized_file' => $demoPdfPath,
                 'file_hash' => $demoPdfHash,
-                'cover_image' => 'images/demo-covers/'.$covers[$index % count($covers)],
+                'cover_image' => $firstPageCover,
                 'processing_status' => ProcessingStatus::Completed,
                 'status' => BookStatus::Published,
                 'visibility' => BookVisibility::Public,

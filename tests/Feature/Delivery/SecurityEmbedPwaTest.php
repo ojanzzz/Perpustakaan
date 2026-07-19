@@ -22,8 +22,16 @@ class SecurityEmbedPwaTest extends TestCase
             ->assertHeader('x-frame-options', 'SAMEORIGIN')
             ->assertHeader('referrer-policy', 'strict-origin-when-cross-origin')
             ->assertHeader('content-security-policy');
-        $this->get('/manifest.webmanifest')->assertOk()->assertJsonPath('name', 'E-Perpustakaan Digital KPU');
-        $this->get('/service-worker.js')->assertOk()->assertSee('eperpustakaan-shell');
+        $this->get('/manifest.webmanifest')->assertOk()
+            ->assertJsonPath('name', 'E-Perpustakaan Digital KPU')
+            ->assertJsonPath('icons.0.src', '/images/pwa-icon-192.png')
+            ->assertJsonPath('icons.1.src', '/images/pwa-icon-512.png');
+        $this->assertSame([192, 192], array_slice(getimagesize(public_path('images/pwa-icon-192.png')), 0, 2));
+        $this->assertSame([512, 512], array_slice(getimagesize(public_path('images/pwa-icon-512.png')), 0, 2));
+        $this->get('/service-worker.js')->assertOk()
+            ->assertSee('eperpustakaan-shell')
+            ->assertSee('/images/pwa-icon-192.png')
+            ->assertSee('/images/pwa-icon-512.png');
     }
 
     public function test_embed_routes_cover_book_collection_and_category(): void

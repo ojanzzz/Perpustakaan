@@ -1,5 +1,5 @@
 <x-layouts.admin title="Tambah Buku">
-    <div class="max-w-4xl"><h1 class="text-3xl font-bold">Tambah buku</h1><p class="mt-2 text-slate-600">Buku disimpan sebagai draft dan PDF diproses melalui antrean.</p>
+    <div class="max-w-4xl"><h1 class="text-3xl font-bold">Tambah buku</h1><p class="mt-2 text-slate-600">Buku langsung diterbitkan setelah data valid; PDF tetap diproses melalui antrean.</p>
         <form method="POST" action="{{ route('admin.books.store') }}" enctype="multipart/form-data" data-upload-form class="mt-6 space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">@csrf
             <div class="grid gap-5 sm:grid-cols-2"><label class="text-sm font-medium sm:col-span-2">Judul<input name="title" value="{{ old('title') }}" required class="mt-1.5 w-full rounded-lg border px-3 py-2.5"></label><label class="text-sm font-medium">Tahun terbit<input name="publication_year" type="number" value="{{ old('publication_year') }}" class="mt-1.5 w-full rounded-lg border px-3 py-2.5"></label><label class="text-sm font-medium">Visibilitas<select name="visibility" class="mt-1.5 w-full rounded-lg border px-3 py-2.5">@foreach(\App\Enums\BookVisibility::cases() as $v)<option value="{{ $v->value }}">{{ $v->name }}</option>@endforeach</select></label><label class="text-sm font-medium sm:col-span-2">Deskripsi<textarea name="description" rows="5" class="mt-1.5 w-full rounded-lg border px-3 py-2.5">{{ old('description') }}</textarea></label></div>
             <div class="grid gap-5 sm:grid-cols-2"><fieldset><legend class="text-sm font-medium">Kategori</legend><div class="mt-2 max-h-40 space-y-2 overflow-auto rounded-lg border p-3">@forelse($categories as $category)<label class="flex gap-2 text-sm"><input type="checkbox" name="category_ids[]" value="{{ $category->id }}"> {{ $category->name }}</label>@empty<p class="text-sm text-slate-500">Belum ada kategori.</p>@endforelse</div></fieldset><fieldset><legend class="text-sm font-medium">Koleksi</legend><div class="mt-2 max-h-40 space-y-2 overflow-auto rounded-lg border p-3">@forelse($collections as $collection)<label class="flex gap-2 text-sm"><input type="checkbox" name="collection_ids[]" value="{{ $collection->id }}"> {{ $collection->name }}</label>@empty<p class="text-sm text-slate-500">Belum ada koleksi.</p>@endforelse</div></fieldset></div>
@@ -12,8 +12,7 @@
                 <div id="url-group" hidden><label class="block text-sm font-medium">URL PDF<input name="pdf_url" type="url" placeholder="https://drive.google.com/file/d/..." value="{{ old('pdf_url') }}" class="mt-1.5 w-full rounded-lg border px-3 py-2.5"></label><p class="mt-1 text-xs text-slate-500">Bisa menggunakan tautan share Google Drive atau URL PDF langsung.</p></div>
             </div>
             <div data-upload-status hidden><div class="mb-1 flex justify-between text-xs"><span>Mengunggah PDF…</span><span data-upload-percent>0%</span></div><progress data-upload-progress value="0" max="100" class="h-2 w-full"></progress></div>
-            <button class="rounded-lg bg-red-700 px-5 py-2.5 font-semibold text-white hover:bg-red-800">Simpan draft</button>
+            <button class="rounded-lg bg-red-700 px-5 py-2.5 font-semibold text-white hover:bg-red-800">Terbitkan buku</button>
         </form>
     </div>
 </x-layouts.admin>
-

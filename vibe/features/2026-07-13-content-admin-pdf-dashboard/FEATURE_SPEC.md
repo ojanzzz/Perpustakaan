@@ -1,5 +1,9 @@
 # Feature Spec — Content Administration, PDF Upload, and Dashboard
 
+> Historical specification. Publication workflow statements below were superseded by
+> decision D-009 on 2026-07-19: every newly added book is published immediately and
+> manual draft, review, scheduling, and archive controls are no longer active.
+
 ## Overview
 
 Phase 2 enables authorized administrators to manage books, categories, and collections,
@@ -42,4 +46,3 @@ metrics from a responsive dashboard.
 - Private disk is authoritative for originals and versions.
 - Validation runs before persistence; heavy thumbnail/metadata work runs in queue.
 - Lists paginate and eager-load relations; indexes from Phase 1 are reused.
-

@@ -29,6 +29,15 @@ class BookCardAnimationContractTest extends TestCase
             ->assertSee('aria-hidden="true"', false);
     }
 
+    public function test_generated_and_bundled_covers_resolve_from_their_correct_public_locations(): void
+    {
+        $generated = Book::factory()->create(['cover_image' => 'covers/41/cover.webp']);
+        $bundled = Book::factory()->create(['cover_image' => 'images/demo-covers/demo-reader-first-page.webp']);
+
+        $this->assertSame(asset('storage/covers/41/cover.webp'), $generated->coverUrl());
+        $this->assertSame(asset('images/demo-covers/demo-reader-first-page.webp'), $bundled->coverUrl());
+    }
+
     public function test_book_card_css_has_pointer_keyboard_and_motion_safe_3d_states(): void
     {
         $css = file_get_contents(resource_path('css/app.css'));

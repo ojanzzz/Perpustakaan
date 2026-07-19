@@ -63,20 +63,27 @@
 
 ## Post-delivery access-model retrofit
 
-- [ ] AS-001-R Replace the legacy role/admin-level schema with public, member, and superadmin
-- [ ] AS-002-R Migrate authorization, 2FA, document access, and policies to the new role model
-- [ ] AS-003-R Simplify administrator account management, permissions, and demo seed data
-- [ ] AS-004-R Replace legacy-level workflow tests and UI copy with superadmin ownership
-- [ ] AS-005-R Verify fresh install, existing-data upgrade, full regression suite, and documentation
+- [x] AS-001-R Replace the legacy role/admin-level schema with public, member, and superadmin
+- [x] AS-002-R Migrate authorization, 2FA, document access, and policies to the new role model
+- [x] AS-003-R Simplify administrator account management, permissions, and demo seed data
+- [x] AS-004-R Replace legacy-level workflow tests and UI copy with superadmin ownership
+- [x] AS-005-R Verify fresh install, existing-data upgrade, full regression suite, and documentation
+
+## Post-delivery direct-publication retrofit
+
+- [x] DP-001-R Replace draft upload contracts with immediate publication contracts
+- [x] DP-002-R Publish local and remote PDF uploads immediately
+- [x] DP-003-R Remove publication workflow routes and administrator UI
+- [x] DP-004-R Replace generated brand marks with `/images/logo.png`
+- [x] DP-005-R Run regression, build, and local admin smoke verification
 
 ## What just happened
 
-Scope change confirmed: the completed four-level administrator model is being replaced
-with exactly three access levels. Five retrofit tasks were added; editor, content-admin,
-and auditor behavior will be removed rather than preserved under hidden aliases.
+Direct-publication retrofit completed: valid local/URL uploads publish immediately,
+manual workflow controls/routes are removed, and the supplied logo is active across shells/PWA.
 
 ## What's next
 
-AS-001-R · Write failing contracts and migrate the authoritative user/access schema.
+No pending retrofit task. Continue with production deployment or new user-requested changes.
 
 > Rencana eksekusi rinci: `vibe/MASTER_COMPLETION_PLAN.md`.

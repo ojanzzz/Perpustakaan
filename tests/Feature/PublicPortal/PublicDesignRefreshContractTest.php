@@ -17,6 +17,8 @@ class PublicDesignRefreshContractTest extends TestCase
             ->assertSee('data-theme-toggle', false)
             ->assertSee('aria-current="page"', false)
             ->assertSee('site-footer', false)
+            ->assertSee('images/logo.png', false)
+            ->assertDontSee('brand-mark', false)
             ->assertSee('Hubungi kami');
     }
 

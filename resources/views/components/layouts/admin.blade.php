@@ -11,7 +11,7 @@
 <body class="min-h-screen bg-slate-100 text-slate-950 antialiased">
     <div class="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
         <aside class="bg-slate-950 px-5 py-6 text-white lg:min-h-screen">
-            <a href="{{ route('admin.dashboard') }}" class="block border-b border-white/10 pb-5 text-lg font-bold tracking-tight">E-Perpustakaan KPU</a>
+            <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3 border-b border-white/10 pb-5 text-lg font-bold tracking-tight"><span class="grid h-10 w-14 shrink-0 place-items-center rounded-lg border border-white/15 bg-white/10 p-1.5"><img src="{{ asset('images/logo.png') }}" alt="Logo E-Perpustakaan Digital KPU" class="h-full w-full object-contain" width="813" height="433"></span><span>E-Perpustakaan KPU</span></a>
             <nav aria-label="Navigasi administrator" class="mt-6 grid grid-cols-2 gap-2 text-sm lg:grid-cols-1">
                 <a href="{{ route('admin.dashboard') }}" class="rounded-lg px-3 py-2.5 hover:bg-white/10">Ringkasan</a>
                 @can('books.view')<a href="{{ route('admin.books.index') }}" class="rounded-lg px-3 py-2.5 hover:bg-white/10">Buku</a>@endcan

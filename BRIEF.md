@@ -4,7 +4,7 @@
 
 Portal katalog dan pembaca dokumen digital KPU yang menyatukan publikasi kepemiluan,
 memudahkan pencarian, menyediakan pengalaman baca PDF/flipbook, dan memberi pengelola
-workflow penerbitan yang terukur serta dapat diaudit.
+alur unggah yang langsung menerbitkan buku serta tetap dapat diaudit.
 
 ## Users and access levels
 
@@ -37,3 +37,5 @@ Where they differ, the attached specification and the user's latest message win.
 - 2026-07-14: model visitor/member/admin beserta empat admin level diganti menjadi
   tepat tiga level akses `public`, `member`, dan `superadmin` untuk menyederhanakan
   pengelolaan sistem.
+- 2026-07-19: workflow review/publish/archive manual dihapus. Buku baru langsung
+  diterbitkan saat berhasil disimpan; data dan riwayat buku lama tetap dipertahankan.

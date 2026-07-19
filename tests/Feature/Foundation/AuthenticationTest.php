@@ -16,6 +16,13 @@ class AuthenticationTest extends TestCase
         $this->get('/login')->assertOk()->assertSee('Masuk');
     }
 
+    public function test_login_form_posts_to_the_current_base_path(): void
+    {
+        $this->get('/login')
+            ->assertOk()
+            ->assertSee('action="login"', false);
+    }
+
     public function test_active_user_can_login_and_logout(): void
     {
         $user = User::factory()->create([

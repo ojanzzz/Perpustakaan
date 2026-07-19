@@ -3,19 +3,25 @@
 namespace App\Observers;
 
 use App\Domain\Audit\AuditRecorder;
+use App\Domain\Catalog\BookPublicationNotifier;
 use App\Enums\BookStatus;
 use App\Models\Book;
-use App\Notifications\BookPublishedNotification;
-use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\Storage;
 
 class BookObserver
 {
-    public function __construct(private readonly AuditRecorder $audit) {}
+    public function __construct(
+        private readonly AuditRecorder $audit,
+        private readonly BookPublicationNotifier $publicationNotifier,
+    ) {}
 
     public function created(Book $book): void
     {
         $this->audit->record('books.create', $book, after: $book->getAttributes());
+
+        if ($book->status === BookStatus::Published && $book->published_at?->isPast()) {
+            $this->audit->record('books.publish', $book, after: $book->getAttributes());
+        }
     }
 
     public function updated(Book $book): void
@@ -28,16 +34,8 @@ class BookObserver
         };
         $this->audit->record($action, $book, $book->getOriginal(), $book->getChanges());
 
-        if (! $book->wasChanged(['status', 'published_at'])
-            || $book->status !== BookStatus::Published
-            || ! $book->published_at?->isPast()) {
-            return;
-        }
-
-        $subscribers = $book->categories()->with('subscribers')->get()
-            ->flatMap->subscribers->unique('id')->values();
-        if ($subscribers->isNotEmpty()) {
-            Notification::send($subscribers, new BookPublishedNotification($book->id));
+        if ($book->wasChanged(['status', 'published_at'])) {
+            $this->publicationNotifier->notify($book);
         }
     }
 

@@ -29,19 +29,19 @@ class PermissionServiceTest extends TestCase
     public function test_superadmin_override_can_deny_or_grant_a_permission(): void
     {
         $create = Permission::factory()->create(['name' => 'books.create']);
-        $publish = Permission::factory()->create(['name' => 'books.publish']);
+        $update = Permission::factory()->create(['name' => 'books.update']);
         $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
         DB::table('role_permissions')->insert([
             'role' => UserRole::Superadmin->value,
             'permission_id' => $create->id,
         ]);
         $superadmin->permissions()->attach($create, ['allowed' => false]);
-        $superadmin->permissions()->attach($publish, ['allowed' => true]);
+        $superadmin->permissions()->attach($update, ['allowed' => true]);
 
         $service = app(PermissionService::class);
 
         $this->assertFalse($service->allows($superadmin, 'books.create'));
-        $this->assertTrue($service->allows($superadmin, 'books.publish'));
+        $this->assertTrue($service->allows($superadmin, 'books.update'));
     }
 
     public function test_member_override_cannot_escalate_to_administrative_access(): void

@@ -1,5 +1,9 @@
 # Three-Level Access Model Implementation Plan
 
+> Historical implementation plan. Task 4's review-transition requirement was superseded
+> by decision D-009 on 2026-07-19; historical records remain, but the active application
+> no longer exposes publication workflow transitions.
+
 Goal: Replace the completed legacy administrator hierarchy with exactly `public`,
 `member`, and `superadmin` without breaking public, member, or governance features.
 

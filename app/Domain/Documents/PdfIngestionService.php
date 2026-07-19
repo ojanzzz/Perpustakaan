@@ -2,6 +2,7 @@
 
 namespace App\Domain\Documents;
 
+use App\Domain\Catalog\BookPublicationNotifier;
 use App\Enums\BookStatus;
 use App\Enums\ProcessingStatus;
 use App\Jobs\ProcessPdf;
@@ -18,22 +19,28 @@ class PdfIngestionService
     public function __construct(
         private readonly PdfValidationService $validator,
         private readonly RemotePdfDownloader $downloader,
+        private readonly BookPublicationNotifier $publicationNotifier,
     ) {}
 
     /** @param array<string, mixed> $data */
-    public function createDraft(array $data, UploadedFile $pdf, User $actor): Book
+    public function createPublished(array $data, UploadedFile $pdf, User $actor): Book
     {
         $probe = $this->validator->probeUpload($pdf);
         $directory = 'books/'.Str::uuid();
         $storedName = Str::uuid().'.pdf';
         $path = $pdf->storeAs($directory, $storedName, 'private');
 
+        if (! is_string($path) || $path === '') {
+            throw new \RuntimeException('PDF gagal disimpan ke penyimpanan privat.');
+        }
+
         try {
             $book = DB::transaction(function () use ($data, $pdf, $actor, $probe, $path): Book {
                 $book = Book::query()->create([
                     ...collect($data)->except(['category_ids', 'collection_ids', 'author_ids', 'tag_ids'])->all(),
                     'slug' => $this->uniqueSlug((string) $data['title']),
-                    'status' => BookStatus::Draft,
+                    'status' => BookStatus::Published,
+                    'published_at' => now(),
                     'processing_status' => ProcessingStatus::Pending,
                     'original_file' => $path,
                     'file_size' => $pdf->getSize(),
@@ -65,13 +72,14 @@ class PdfIngestionService
             throw $exception;
         }
 
+        $this->publicationNotifier->notify($book);
         ProcessPdf::dispatch($book->id)->afterCommit();
 
         return $book;
     }
 
     /** @param array<string, mixed> $data */
-    public function createDraftFromUrl(array $data, string $url, User $actor): Book
+    public function createPublishedFromUrl(array $data, string $url, User $actor): Book
     {
         $tempPath = $this->downloader->download($url);
         $originalName = basename(parse_url($url, PHP_URL_PATH) ?: 'document.pdf');
@@ -82,12 +90,17 @@ class PdfIngestionService
             $storedName = Str::uuid().'.pdf';
             $path = Storage::disk('private')->putFileAs($directory, $tempPath, $storedName);
 
+            if (! is_string($path) || $path === '') {
+                throw new \RuntimeException('PDF gagal disimpan ke penyimpanan privat.');
+            }
+
             try {
                 $book = DB::transaction(function () use ($data, $tempPath, $actor, $probe, $path, $originalName): Book {
                     $book = Book::query()->create([
                         ...collect($data)->except(['category_ids', 'collection_ids', 'author_ids', 'tag_ids'])->all(),
                         'slug' => $this->uniqueSlug((string) $data['title']),
-                        'status' => BookStatus::Draft,
+                        'status' => BookStatus::Published,
+                        'published_at' => now(),
                         'processing_status' => ProcessingStatus::Pending,
                         'original_file' => $path,
                         'file_size' => filesize($tempPath),
@@ -119,6 +132,7 @@ class PdfIngestionService
                 throw $exception;
             }
 
+            $this->publicationNotifier->notify($book);
             ProcessPdf::dispatch($book->id)->afterCommit();
 
             return $book;
@@ -134,12 +148,16 @@ class PdfIngestionService
         $storedName = Str::uuid().'.pdf';
         $newPath = $pdf->storeAs($directory, $storedName, 'private');
 
+        if (! is_string($newPath) || $newPath === '') {
+            throw new \RuntimeException('PDF gagal disimpan ke penyimpanan privat.');
+        }
+
+        $oldOriginal = $book->original_file;
+        $oldOptimized = $book->optimized_file;
+        $oldCover = $book->cover_image;
+
         try {
             DB::transaction(function () use ($book, $pdf, $actor, $probe, $newPath): void {
-                $oldOriginal = $book->original_file;
-                $oldOptimized = $book->optimized_file;
-                $oldCover = $book->cover_image;
-
                 $book->update([
                     'original_file' => $newPath,
                     'file_size' => $pdf->getSize(),
@@ -163,22 +181,32 @@ class PdfIngestionService
                     'created_by' => $actor->id,
                 ]);
 
-                if ($oldOriginal) {
-                    Storage::disk('private')->delete($oldOriginal);
-                }
-                if ($oldOptimized) {
-                    Storage::disk('private')->delete($oldOptimized);
-                }
-                if ($oldCover) {
-                    Storage::disk('public')->delete($oldCover);
-                }
             });
         } catch (\Throwable $exception) {
             Storage::disk('private')->delete($newPath);
             throw $exception;
         }
 
+        $this->deleteReplacedFiles($oldOriginal, $oldOptimized, $oldCover);
+
         ProcessPdf::dispatch($book->id)->afterCommit();
+    }
+
+    private function deleteReplacedFiles(?string $original, ?string $optimized, ?string $cover): void
+    {
+        try {
+            if ($original) {
+                Storage::disk('private')->delete($original);
+            }
+            if ($optimized) {
+                Storage::disk('private')->delete($optimized);
+            }
+            if ($cover) {
+                Storage::disk('public')->delete($cover);
+            }
+        } catch (\Throwable $exception) {
+            report($exception);
+        }
     }
 
     private function uniqueSlug(string $title): string

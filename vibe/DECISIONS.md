@@ -78,3 +78,25 @@ Append-only architecture decision log.
   role permission mappings while keeping granular user overrides.
 - **BRIEF.md updated**: yes
 - **Approved by**: human
+
+---
+
+### D-009 — Publish books immediately after upload
+
+- **Date**: 2026-07-19 · **Type**: scope-change
+- **Trigger**: user-requested removal of the administrator publication workflow
+- **Build stage**: post-completion
+- **What changed**: remove manual submit, return, publish/schedule, and archive controls;
+  publish each valid new book immediately and use `/images/logo.png` as the application logo.
+- **Why**: simplify daily book administration and remove unnecessary approval steps.
+- **Before**: new books were drafts and required workflow transitions before discovery.
+- **After**: new books receive `published` and `published_at` during ingestion; metadata
+  editing and PDF replacement remain available.
+- **Data migration**: none; old statuses and review records are preserved for audit history.
+- **Tasks affected**: Retrofit DP-001-R through DP-005-R.
+- **Folders affected**: document ingestion, admin controller/routes/views, shared layouts,
+  tests, and active documentation.
+- **Architecture impact**: yes — publication becomes an ingestion invariant rather than a
+  separate state-transition workflow.
+- **BRIEF.md updated**: yes
+- **Approved by**: human

@@ -41,24 +41,24 @@ class BookController extends Controller
     {
         try {
             if ($request->filled('pdf_url')) {
-                $service->createDraftFromUrl(
+                $service->createPublishedFromUrl(
                     $request->safe()->except(['pdf', 'pdf_url']),
                     $request->input('pdf_url'),
                     $request->user()
                 );
             } else {
-                $service->createDraft($request->safe()->except('pdf'), $request->file('pdf'), $request->user());
+                $service->createPublished($request->safe()->except('pdf'), $request->file('pdf'), $request->user());
             }
         } catch (\RuntimeException $exception) {
             throw ValidationException::withMessages(['pdf' => $exception->getMessage()]);
         }
 
-        return redirect('/admin/books')->with('status', 'Draft buku berhasil dibuat dan PDF masuk antrean pemrosesan.');
+        return redirect('/admin/books')->with('status', 'Buku berhasil diterbitkan dan PDF masuk antrean pemrosesan.');
     }
 
     public function edit(Book $book): View
     {
-        $book->load('categories', 'collections', 'reviews.user:id,name');
+        $book->load('categories', 'collections');
 
         return view('admin.books.edit', [
             'book' => $book,

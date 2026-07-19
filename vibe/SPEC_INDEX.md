@@ -1,7 +1,7 @@
 # SPEC INDEX — E-PERPUSTAKAAN DIGITAL KPU
 
 > Source of truth: `Requitment.txt`, attachment specification, and `BRIEF.md`.
-> Last synced: 2026-07-14 · Scope change D-008.
+> Last synced: 2026-07-19 · Scope change D-009.
 
 - Product and users → `BRIEF.md`
 - Authoritative access model → `vibe/SPEC.md` (`public`, `member`, `superadmin` only)
@@ -14,3 +14,5 @@
 - Phase 5 → analytics, audit, backup, feedback
 - Phase 6 → hardening, documentation, deployment
 - Post-delivery retrofit → remove legacy admin levels and migrate to three access levels
+- Post-delivery retrofit → direct publication on upload, no manual publication workflow,
+  and supplied logo asset across public/admin layouts

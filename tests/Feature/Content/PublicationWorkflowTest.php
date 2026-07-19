@@ -8,30 +8,44 @@ use App\Models\Book;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Route;
 use Tests\TestCase;
 
 class PublicationWorkflowTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_superadmin_controls_the_full_publication_workflow_and_member_is_denied(): void
+    public function test_manual_publication_workflow_routes_and_edit_controls_are_removed(): void
     {
         $this->seed(PermissionSeeder::class);
         $superadmin = User::factory()->create(['role' => UserRole::Superadmin]);
-        $member = User::factory()->create(['role' => UserRole::Member]);
-        $book = Book::factory()->create(['status' => BookStatus::Draft, 'created_by' => $superadmin->id]);
+        $book = Book::factory()->create([
+            'status' => BookStatus::Published,
+            'published_at' => now(),
+            'created_by' => $superadmin->id,
+        ]);
 
-        $this->actingAs($superadmin)->post("/admin/books/{$book->id}/submit", ['notes' => 'Siap ditinjau'])->assertRedirect();
-        $this->assertSame(BookStatus::PendingReview, $book->fresh()->status);
-        $this->actingAs($member)->post("/admin/books/{$book->id}/publish")->assertForbidden();
+        $this->assertFalse(Route::has('admin.books.submit'));
+        $this->assertFalse(Route::has('admin.books.return'));
+        $this->assertFalse(Route::has('admin.books.publish'));
+        $this->assertFalse(Route::has('admin.books.archive'));
+        $this->assertSame(0, DB::table('permissions')->whereIn('name', [
+            'books.submit',
+            'books.review',
+            'books.publish',
+            'books.schedule',
+            'books.archive',
+        ])->count());
 
-        $this->actingAs($superadmin)->post("/admin/books/{$book->id}/return", ['notes' => 'Perbaiki metadata penerbit.'])->assertRedirect();
-        $this->assertSame(BookStatus::Draft, $book->fresh()->status);
-        $this->assertDatabaseHas('book_reviews', ['book_id' => $book->id, 'action' => 'returned', 'notes' => 'Perbaiki metadata penerbit.']);
+        foreach (['submit', 'return', 'publish', 'archive'] as $action) {
+            $this->actingAs($superadmin)->post("/admin/books/{$book->id}/{$action}")->assertNotFound();
+        }
 
-        $this->actingAs($superadmin)->post("/admin/books/{$book->id}/submit")->assertRedirect();
-        $this->actingAs($superadmin)->post("/admin/books/{$book->id}/publish", ['published_at' => now()->toDateTimeString()])->assertRedirect();
-        $this->assertSame(BookStatus::Published, $book->fresh()->status);
-        $this->assertNotNull($book->fresh()->published_at);
+        $this->actingAs($superadmin)->get("/admin/books/{$book->id}/edit")
+            ->assertOk()
+            ->assertDontSee('Alur publikasi')
+            ->assertDontSee('Kirim untuk ditinjau')
+            ->assertSee('images/logo.png', false);
     }
 }

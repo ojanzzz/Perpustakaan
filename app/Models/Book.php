@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Storage;
 
 class Book extends Model
 {
@@ -38,6 +39,19 @@ class Book extends Model
             'download_enabled' => 'boolean',
             'print_enabled' => 'boolean',
         ];
+    }
+
+    public function coverUrl(): ?string
+    {
+        if (! $this->cover_image) {
+            return null;
+        }
+
+        if (str_starts_with($this->cover_image, 'images/')) {
+            return asset($this->cover_image);
+        }
+
+        return Storage::disk('public')->url($this->cover_image);
     }
 
     public function publisher(): BelongsTo

@@ -1,5 +1,5 @@
-const CACHE = 'eperpustakaan-shell-v2';
-const SHELL = ['/offline.html', '/manifest.webmanifest', '/images/pwa-icon.svg'];
+const CACHE = 'eperpustakaan-shell-v3';
+const SHELL = ['/offline.html', '/manifest.webmanifest', '/images/logo.png', '/images/pwa-icon-192.png', '/images/pwa-icon-512.png'];
 self.addEventListener('install', event => event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting())));
 self.addEventListener('activate', event => event.waitUntil(caches.keys().then(keys => Promise.all(keys.filter(key => key !== CACHE).map(key => caches.delete(key)))).then(() => self.clients.claim())));
 self.addEventListener('fetch', event => {

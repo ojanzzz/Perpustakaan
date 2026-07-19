@@ -3,7 +3,6 @@
 use App\Http\Controllers\Admin\AuditLogController;
 use App\Http\Controllers\Admin\BackupController;
 use App\Http\Controllers\Admin\BookController;
-use App\Http\Controllers\Admin\BookWorkflowController;
 use App\Http\Controllers\Admin\CategoryController;
 use App\Http\Controllers\Admin\CollectionController;
 use App\Http\Controllers\Admin\DashboardController;
@@ -133,11 +132,6 @@ Route::prefix('admin')->middleware(['auth', 'admin.2fa'])->group(function (): vo
     Route::put('/books/{book}', [BookController::class, 'update'])->middleware('permission:books.update')->name('admin.books.update');
     Route::delete('/books/{book}', [BookController::class, 'destroy'])->middleware('permission:books.delete')->name('admin.books.destroy');
     Route::delete('/books/{book}/force', [BookController::class, 'forceDelete'])->middleware('permission:books.force_delete')->name('admin.books.force_delete');
-    Route::post('/books/{book}/submit', [BookWorkflowController::class, 'submit'])->middleware('permission:books.submit')->name('admin.books.submit');
-    Route::post('/books/{book}/return', [BookWorkflowController::class, 'return'])->middleware('permission:books.review')->name('admin.books.return');
-    Route::post('/books/{book}/publish', [BookWorkflowController::class, 'publish'])->middleware('permission:books.publish')->name('admin.books.publish');
-    Route::post('/books/{book}/archive', [BookWorkflowController::class, 'archive'])->middleware('permission:books.archive')->name('admin.books.archive');
-
     Route::get('/categories', [CategoryController::class, 'index'])->middleware('permission:books.view')->name('admin.categories.index');
     Route::post('/categories', [CategoryController::class, 'store'])->middleware('permission:taxonomy.manage')->name('admin.categories.store');
     Route::put('/categories/{category}', [CategoryController::class, 'update'])->middleware('permission:taxonomy.manage')->name('admin.categories.update');

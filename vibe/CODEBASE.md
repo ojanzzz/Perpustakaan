@@ -1,6 +1,6 @@
 # Codebase — E-PERPUSTAKAAN DIGITAL KPU
 
-> 2026-07-14 · Updated for the final three-level access model.
+> 2026-07-19 · Updated for direct publication and the supplied application logo.
 
 ## Runtime
 
@@ -22,10 +22,13 @@
   superadmin/member demo accounts.
 - `tests/Feature/Foundation`: fresh schema and behavior contracts.
 - `app/Models/Book.php` and catalog models: metadata and many-to-many taxonomy relations.
-- `app/Domain/Documents`: PDF validation and atomic private-file ingestion.
+- `app/Domain/Documents`: PDF validation and atomic private-file ingestion; every valid
+  new upload is assigned `published` plus `published_at` before queue dispatch.
 - `app/Jobs/ProcessPdf.php`: queued metadata, checksum, page count, and WebP cover generation.
 - `app/Http/Controllers/Admin`: dashboard and permission-protected catalog management.
 - `resources/views/admin`: responsive dashboard, book upload/edit, category, and collection UI.
+- `resources/views/components/layouts`: public and administrator shells use
+  `public/images/logo.png`; the same asset is used by favicon, manifest, and service worker.
 - `tests/Feature/Content`: catalog, upload, processing, permission, dashboard, and seed contracts.
 - `app/Domain/Catalog/BookAccessService.php`: one publication/access boundary for discovery and direct detail.
 - `app/Domain/Search/CatalogSearch.php`: metadata relations, filters, sorting, pagination, and privacy-preserving logs.
@@ -63,6 +66,9 @@ Home, login/logout, setting-controlled registration, password reset, email verif
 superadmin-only dashboard `/admin`, book management `/admin/books`, category management
 `/admin/categories`, and collection management `/admin/collections`. Every admin mutation
 uses granular permission middleware; resource policies share the same permission service.
+Book creation publishes immediately. The former submit/return/publish/archive endpoints
+and their controller/domain workflow have been removed; legacy review rows remain readable
+at the data layer for audit compatibility.
 
 Public discovery routes include `/`, `/katalog`, `/cari`, `/terbaru`, `/terpopuler`,
 `/rak/{slug}`, `/kategori/{slug}`, `/buku/{slug}`, reader and signed document routes,

@@ -1,3 +1,5 @@
+import { PageFlip } from 'page-flip';
+
 const root = document.querySelector('[data-reader-root]');
 
 if (root) {
@@ -7,10 +9,11 @@ if (root) {
         total: Number(root.dataset.totalPages || 1),
         zoom: 1,
         fit: 'page',
-        mode: window.matchMedia('(max-width: 767px)').matches ? 'scroll' : 'flip',
-        spread: !window.matchMedia('(max-width: 1100px)').matches,
+        mode: 'flip',
+        spread: !window.matchMedia('(max-width: 767px)').matches,
+        spreadPreference: null,
         reduced: window.matchMedia('(prefers-reduced-motion: reduce)').matches,
-        sidebar: !window.matchMedia('(max-width: 767px)').matches,
+        sidebar: false,
         renderedScroll: new Map(),
         pagePromises: new Map(),
         bookmarks: JSON.parse(document.querySelector('#reader-bookmarks-data')?.textContent || '[]'),
@@ -18,6 +21,7 @@ if (root) {
         lastProgressAt: Date.now(),
         lastAnalyticsAt: Date.now(),
         readerSession: sessionStorage.getItem('reader:session') || (crypto.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}`),
+        pageFlip: null,
     };
 
     const $ = (selector, scope = root) => scope.querySelector(selector);
@@ -25,28 +29,55 @@ if (root) {
     const loading = $('[data-loading]');
     const errorBox = $('[data-error]');
     const flipViewport = $('[data-flip-viewport]');
-    const flipSpread = $('[data-flip-spread]');
     const scrollViewport = $('[data-scroll-viewport]');
     const sidebar = $('#reader-sidebar');
     const stage = $('#reader-stage');
     const pageInput = $('[data-page-input]');
+    const zoomRange = $('[data-zoom-range]');
+    const filmstripTrack = $('[data-filmstrip-track]');
     const toast = $('[data-toast]');
+    const controlBar = $('.reader-control-bar');
+    const sidebarToggle = $('[data-action="toggle-sidebar"]');
+    const moreMenu = $('[data-more-menu]');
+    const moreButton = $('[data-action="more"]');
+    const shareDialog = $('[data-share-dialog]');
     const csrf = document.querySelector('meta[name="csrf-token"]')?.content;
     let toastTimer;
+    let controlsHideTimer;
     let progressTimer;
     let scrollObserver;
     let scrollNavigationUntil = 0;
     let scrollAlignmentTimers = [];
-    let flipRenderToken = 0;
-    let pageTurnCleanupTimer;
 
     root.classList.toggle('sidebar-closed', !state.sidebar);
+    sidebar.inert = !state.sidebar;
+    sidebar.setAttribute('aria-hidden', String(!state.sidebar));
     root.classList.toggle('reduce-motion', state.reduced);
     sessionStorage.setItem('reader:session', state.readerSession);
 
     const icons = {
         bookmark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z"/></svg>',
     };
+
+    function controlsAreBusy() {
+        return controlBar.matches(':hover')
+            || controlBar.contains(document.activeElement)
+            || !moreMenu.hidden
+            || Boolean(shareDialog?.open);
+    }
+
+    function scheduleControlsHide() {
+        clearTimeout(controlsHideTimer);
+        controlsHideTimer = setTimeout(() => {
+            if (controlsAreBusy()) return scheduleControlsHide();
+            root.classList.add('reader-controls-hidden');
+        }, 2400);
+    }
+
+    function revealControls() {
+        root.classList.remove('reader-controls-hidden');
+        scheduleControlsHide();
+    }
 
     function notify(message) {
         clearTimeout(toastTimer);
@@ -84,11 +115,11 @@ if (root) {
 
     function availableScale(page, spread = false) {
         const base = page.getViewport({scale: 1});
-        const sidebarWidth = state.sidebar && window.innerWidth > 767 ? sidebar.offsetWidth : 0;
-        const width = Math.max(260, window.innerWidth - sidebarWidth - 72) / (spread ? 2 : 1);
-        const height = Math.max(340, window.innerHeight - 132);
-        const fitWidth = (width - 28) / base.width;
-        const fitPage = Math.min(fitWidth, (height - 32) / base.height);
+        const compact = window.matchMedia('(max-width: 767px)').matches;
+        const width = Math.max(240, stage.clientWidth - (compact ? 52 : 184)) / (spread ? 2 : 1);
+        const height = Math.max(280, stage.clientHeight - (compact ? 126 : 150));
+        const fitWidth = (width - (compact ? 2 : 10)) / base.width;
+        const fitPage = Math.min(fitWidth, height / base.height);
         return (state.fit === 'width' ? fitWidth : fitPage) * state.zoom;
     }
 
@@ -114,66 +145,100 @@ if (root) {
         $('[data-status-text]').textContent = `Halaman ${state.page} dari ${state.total}`;
         $('[data-mode-label]').textContent = state.mode === 'flip' ? `Mode flip · ${state.spread ? 'dua halaman' : 'satu halaman'}` : 'Mode scroll';
         $('[data-zoom-label]').textContent = `${Math.round(state.zoom * 100)}%`;
+        zoomRange.value = Math.round(state.zoom * 100);
+        const lastVisiblePage = state.mode === 'flip' && state.spread ? Math.min(state.total, state.page + 1) : state.page;
+        const canPrevious = state.page > 1;
+        const canNext = lastVisiblePage < state.total;
+        $$('[data-action="previous"]').forEach(button => { button.disabled = !canPrevious; });
+        $$('[data-action="next"]').forEach(button => { button.disabled = !canNext; });
         const url = new URL(window.location.href);
         url.searchParams.set('page', state.page);
         history.replaceState({}, '', url);
         localStorage.setItem(`reader:last-page:${root.dataset.bookSlug}`, String(state.page));
-        $$('.thumbnail-item').forEach(item => item.classList.toggle('is-current', Number(item.dataset.page) === state.page));
+        $$('.filmstrip-thumbnail').forEach(item => item.classList.toggle('is-current', Number(item.dataset.page) === state.page));
+        scrollCurrentThumbnailIntoView();
     }
 
-    async function renderFlip(direction = 'none') {
-        const renderToken = ++flipRenderToken;
-        root.dataset.pageTurnState = 'rendering';
+    function scrollCurrentThumbnailIntoView() {
+        const current = $('.filmstrip-thumbnail.is-current', filmstripTrack);
+        current?.scrollIntoView({behavior: state.reduced ? 'auto' : 'smooth', block: 'nearest', inline: 'center'});
+    }
+
+    async function initFlipBook() {
+        if (state.pageFlip) {
+            state.pageFlip.destroy();
+            state.pageFlip = null;
+        }
         flipViewport.hidden = false;
         scrollViewport.hidden = true;
-        const previousWrapper = $('.flip-pages', flipSpread);
-        const pages = [state.page];
-        if (state.spread && state.page < state.total) pages.push(state.page + 1);
-        const wrapper = document.createElement('div');
-        wrapper.className = `flip-pages ${state.spread ? 'is-spread' : 'is-single'}`;
-        for (const number of pages) {
-            const sheet = document.createElement('article');
-            sheet.className = 'flip-sheet';
-            sheet.dataset.page = number;
-            sheet.innerHTML = `<span class="page-loading">Memuat halaman ${number}…</span>`;
-            wrapper.append(sheet);
+
+        const compact = window.matchMedia('(max-width: 767px)').matches;
+        const stageWidth = stage.clientWidth;
+        const stageHeight = stage.clientHeight;
+        const basePage = await getPage(1);
+        const baseViewport = basePage.getViewport({scale: 1});
+        const availableWidth = Math.max(240, stageWidth - (compact ? 52 : 184)) / (state.spread ? 2 : 1);
+        const availableHeight = Math.max(280, stageHeight - (compact ? 126 : 150));
+        const fitWidthScale = (availableWidth - (compact ? 2 : 10)) / baseViewport.width;
+        const fitPageScale = Math.min(fitWidthScale, availableHeight / baseViewport.height);
+        const scale = Math.max(0.1, (state.fit === 'width' ? fitWidthScale : fitPageScale) * state.zoom);
+        const pageWidth = Math.max(200, Math.floor(baseViewport.width * scale));
+        const pageHeight = Math.max(280, Math.floor(baseViewport.height * scale));
+
+        const bookEl = document.createElement('div');
+        bookEl.className = 'flip-book';
+        const pageImages = [];
+
+        for (let i = 1; i <= state.total; i++) {
             try {
-                const canvas = await canvasForPage(number, state.spread ? 'spread' : 'page');
-                sheet.replaceChildren(canvas);
-            } catch (error) {
-                sheet.innerHTML = `<p class="page-failed">Halaman ${number} gagal dimuat.</p>`;
+                const canvas = await canvasForPage(i, state.spread ? 'spread' : 'page');
+                pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+            } catch {
+                const fallback = document.createElement('canvas');
+                fallback.width = pageWidth;
+                fallback.height = pageHeight;
+                const fallbackContext = fallback.getContext('2d', {alpha: false});
+                fallbackContext.fillStyle = '#ffffff';
+                fallbackContext.fillRect(0, 0, pageWidth, pageHeight);
+                fallbackContext.fillStyle = '#64748b';
+                fallbackContext.font = '16px sans-serif';
+                fallbackContext.textAlign = 'center';
+                fallbackContext.fillText(`Halaman ${i} gagal dimuat`, pageWidth / 2, pageHeight / 2);
+                pageImages.push(fallback.toDataURL('image/jpeg', 0.92));
             }
         }
-        if (renderToken !== flipRenderToken) return;
-        clearTimeout(pageTurnCleanupTimer);
-        if (state.reduced || direction === 'none' || !previousWrapper) {
-            flipSpread.replaceChildren(wrapper);
-            root.dataset.pageTurnState = 'idle';
-        } else {
-            const previousSheets = $$('.flip-sheet', previousWrapper);
-            const turningSheet = direction === 'next' ? previousSheets.at(-1) : previousSheets[0];
-            const wrapperBounds = previousWrapper.getBoundingClientRect();
-            const sheetBounds = turningSheet.getBoundingClientRect();
-            const overlay = document.createElement('div');
-            overlay.className = `page-turn-overlay ${direction === 'next' ? 'turn-forward' : 'turn-backward'} ${previousWrapper.classList.contains('is-spread') ? 'is-spread' : 'is-single'}`;
-            overlay.setAttribute('aria-hidden', 'true');
-            overlay.style.width = `${wrapperBounds.width}px`;
-            overlay.style.height = `${wrapperBounds.height}px`;
-            turningSheet.classList.add('turning-sheet');
-            turningSheet.style.width = `${sheetBounds.width}px`;
-            turningSheet.style.height = `${sheetBounds.height}px`;
-            overlay.append(turningSheet);
-            flipSpread.replaceChildren(wrapper, overlay);
-            root.dataset.pageTurnState = direction;
 
-            const cleanup = () => {
-                if (overlay.isConnected) overlay.remove();
-                root.dataset.pageTurnState = 'complete';
-            };
-            overlay.addEventListener('animationend', cleanup, {once: true});
-            requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('is-turning')));
-            pageTurnCleanupTimer = setTimeout(cleanup, 1100);
-        }
+        flipViewport.innerHTML = '';
+        flipViewport.appendChild(bookEl);
+
+        state.pageFlip = new PageFlip(bookEl, {
+            width: pageWidth,
+            height: pageHeight,
+            size: 'stretch',
+            minWidth: 200,
+            maxWidth: Math.max(200, stageWidth),
+            minHeight: 280,
+            maxHeight: stageHeight,
+            maxShadowOpacity: 0.45,
+            showCover: false,
+            mobileScrollSupport: false,
+            flippingTime: state.reduced ? 1 : 800,
+            usePortrait: !state.spread,
+            startPage: Math.max(0, Math.min(state.page - 1, state.total - 1)),
+            drawShadow: true,
+            showPageCorners: false,
+        });
+
+        state.flipBookSpread = state.spread;
+
+        state.pageFlip.loadFromImages(pageImages);
+        state.pageFlip.on('flip', (e) => {
+            if (!state.pageFlip) return;
+            state.page = e.data + 1;
+            updateChrome();
+            scheduleProgress();
+        });
+
         updateChrome();
     }
 
@@ -219,6 +284,9 @@ if (root) {
 
     async function showMode(scrollToPage = false) {
         if (state.mode === 'scroll') {
+            state.pageFlip?.destroy();
+            state.pageFlip = null;
+            state.flipBookSpread = null;
             flipViewport.hidden = true;
             scrollViewport.hidden = false;
             if (!scrollViewport.children.length) setupScrollPages();
@@ -228,17 +296,31 @@ if (root) {
             updateChrome();
         } else {
             scrollObserver?.disconnect();
-            await renderFlip();
+            const needsReinit = !state.pageFlip || state.flipBookSpread !== state.spread;
+            if (needsReinit) {
+                state.pageFlip?.destroy();
+                state.pageFlip = null;
+                await initFlipBook();
+            } else {
+                flipViewport.hidden = false;
+                scrollViewport.hidden = true;
+                const currentIndex = state.pageFlip.getCurrentPageIndex();
+                if (currentIndex + 1 !== state.page) {
+                    state.pageFlip.flip(state.page - 1);
+                }
+            }
         }
     }
 
     async function goToPage(page, direction = 'none') {
-        state.page = Math.max(1, Math.min(Number(page) || 1, state.total));
+        page = Math.max(1, Math.min(Number(page) || 1, state.total));
+        if (state.page === page && direction === 'none') return;
+        state.page = page;
         updateChrome();
         if (state.mode === 'scroll') {
             scheduleScrollAlignment(state.page, !state.reduced);
-        } else {
-            await renderFlip(direction);
+        } else if (state.pageFlip) {
+            await state.pageFlip.flip(state.page - 1);
         }
         scheduleProgress();
     }
@@ -269,7 +351,7 @@ if (root) {
         for (let number = 1; number <= state.total; number++) {
             const button = document.createElement('button');
             button.type = 'button';
-            button.className = 'thumbnail-item';
+            button.className = 'filmstrip-thumbnail';
             button.dataset.page = number;
             button.innerHTML = `<span class="thumbnail-canvas"><i></i></span><b>${number}</b>`;
             button.addEventListener('click', () => goToPage(number));
@@ -312,7 +394,10 @@ if (root) {
         state.bookmarks.sort((a, b) => a.page - b.page).forEach(bookmark => {
             const row = document.createElement('div');
             row.className = 'bookmark-row';
-            row.innerHTML = `<button type="button">${icons.bookmark}<span><strong>${bookmark.label || `Halaman ${bookmark.page}`}</strong><small>Halaman ${bookmark.page}</small></span></button><button type="button" class="bookmark-delete" aria-label="Hapus bookmark">×</button>`;
+            row.innerHTML = `<button type="button">${icons.bookmark}<span><strong></strong><small></small></span></button><button type="button" class="bookmark-delete" aria-label="Hapus bookmark">×</button>`;
+            const bookmarkLabel = $('strong', row);
+            bookmarkLabel.textContent = bookmark.label || `Halaman ${bookmark.page}`;
+            $('small', row).textContent = `Halaman ${bookmark.page}`;
             $('button', row).addEventListener('click', () => goToPage(bookmark.page));
             $('.bookmark-delete', row).addEventListener('click', () => deleteBookmark(bookmark.page));
             list.append(row);
@@ -410,26 +495,39 @@ if (root) {
 
     async function perform(action) {
         switch (action) {
-            case 'previous': return goToPage(state.page - (state.mode === 'flip' && state.spread ? 2 : 1), 'previous');
-            case 'next': return goToPage(state.page + (state.mode === 'flip' && state.spread ? 2 : 1), 'next');
-            case 'zoom-in': state.zoom = Math.min(3, state.zoom + 0.15); return showMode();
-            case 'zoom-out': state.zoom = Math.max(0.5, state.zoom - 0.15); return showMode();
-            case 'fit-width': state.fit = 'width'; state.zoom = 1; return showMode();
-            case 'fit-page': state.fit = 'page'; state.zoom = 1; return showMode();
+            case 'previous': return state.page > 1 ? goToPage(state.page - (state.mode === 'flip' && state.spread ? 2 : 1), 'previous') : null;
+            case 'next': return state.page + (state.mode === 'flip' && state.spread ? 1 : 0) < state.total ? goToPage(state.page + (state.mode === 'flip' && state.spread ? 2 : 1), 'next') : null;
+            case 'zoom-in': state.zoom = Math.min(3, state.zoom + 0.15); return state.mode === 'flip' ? initFlipBook() : showMode();
+            case 'zoom-out': state.zoom = Math.max(0.5, state.zoom - 0.15); return state.mode === 'flip' ? initFlipBook() : showMode();
+            case 'scroll-thumbnails-prev': filmstripTrack.scrollBy({left: -Math.max(220, filmstripTrack.clientWidth * .7), behavior: state.reduced ? 'auto' : 'smooth'}); return;
+            case 'scroll-thumbnails-next': filmstripTrack.scrollBy({left: Math.max(220, filmstripTrack.clientWidth * .7), behavior: state.reduced ? 'auto' : 'smooth'}); return;
+            case 'fit-width': return setFitMode('width');
+            case 'fit-page': return setFitMode('page');
             case 'toggle-mode': state.mode = state.mode === 'flip' ? 'scroll' : 'flip'; return showMode(true);
-            case 'toggle-spread': state.spread = !state.spread; state.mode = 'flip'; return showMode();
-            case 'toggle-sidebar': state.sidebar = !state.sidebar; root.classList.toggle('sidebar-closed', !state.sidebar); $('[data-action="toggle-sidebar"]').setAttribute('aria-expanded', state.sidebar); return showMode();
+            case 'toggle-spread':
+                state.spread = !state.spread;
+                state.spreadPreference = state.spread;
+                state.mode = 'flip';
+                state.pageFlip?.destroy();
+                state.pageFlip = null;
+                return initFlipBook();
+            case 'toggle-sidebar': setSidebarOpen(!state.sidebar, {restoreFocus: state.sidebar}); return showMode();
+            case 'open-panel': return;
             case 'fullscreen': return document.fullscreenElement ? document.exitFullscreen() : root.requestFullscreen();
             case 'share': return setupShare();
             case 'copy-link': await navigator.clipboard.writeText($('[data-share-url]').value); return notify('Tautan berhasil disalin.');
             case 'add-bookmark': return addBookmark();
             case 'theme': document.documentElement.dataset.readerTheme = document.documentElement.dataset.readerTheme === 'dark' ? 'light' : 'dark'; return;
-            case 'reduced-motion': state.reduced = !state.reduced; root.classList.toggle('reduce-motion', state.reduced); return notify(state.reduced ? 'Animasi dikurangi.' : 'Animasi diaktifkan.');
-            case 'more': { const menu = $('[data-more-menu]'); menu.hidden = !menu.hidden; $('[data-action="more"]').setAttribute('aria-expanded', !menu.hidden); return; }
+            case 'reduced-motion':
+                state.reduced = !state.reduced;
+                root.classList.toggle('reduce-motion', state.reduced);
+                if (state.mode === 'flip') await initFlipBook();
+                return notify(state.reduced ? 'Animasi dikurangi.' : 'Animasi diaktifkan.');
+            case 'more': return setMoreMenuOpen(moreMenu.hidden, {focusMenu: moreMenu.hidden});
             case 'favorite': {
                 if (root.dataset.authenticated !== 'true') return notify('Masuk sebagai anggota untuk menyimpan favorit.');
-                const button = $('[data-action="favorite"]'); const active = button.getAttribute('aria-pressed') === 'true';
-                try { await api(root.dataset.favoriteUrl, {method: active ? 'DELETE' : 'PUT'}); button.setAttribute('aria-pressed', String(!active)); notify(active ? 'Dihapus dari favorit.' : 'Disimpan ke favorit.'); }
+                const favoriteButtons = $$('[data-action="favorite"]'); const active = favoriteButtons.some(button => button.getAttribute('aria-pressed') === 'true');
+                try { await api(root.dataset.favoriteUrl, {method: active ? 'DELETE' : 'PUT'}); favoriteButtons.forEach(button => button.setAttribute('aria-pressed', String(!active))); notify(active ? 'Dihapus dari favorit.' : 'Disimpan ke favorit.'); }
                 catch (error) { notify(error.message); } return;
             }
             case 'print': window.open(root.dataset.documentUrl, '_blank', 'noopener'); return notify('Gunakan perintah cetak pada tab dokumen.');
@@ -438,11 +536,39 @@ if (root) {
     }
 
     function bindEvents() {
+        root.addEventListener('pointermove', revealControls, {passive: true});
+        root.addEventListener('pointerdown', revealControls, {passive: true});
+        controlBar.addEventListener('pointerenter', () => clearTimeout(controlsHideTimer));
+        controlBar.addEventListener('pointerleave', scheduleControlsHide);
+        controlBar.addEventListener('focusin', () => clearTimeout(controlsHideTimer));
+        controlBar.addEventListener('focusout', scheduleControlsHide);
+        shareDialog?.addEventListener('close', scheduleControlsHide);
+        document.addEventListener('fullscreenchange', revealControls);
         root.addEventListener('click', event => {
             const control = event.target.closest('[data-action]');
-            if (control) { event.preventDefault(); perform(control.dataset.action); }
+            if (control) {
+                event.preventDefault();
+                if (control.dataset.panelTrigger) openPanel(control.dataset.panelTrigger);
+                if (control.dataset.action !== 'more' && !moreMenu.hidden) {
+                    setMoreMenuOpen(false, {restoreFocus: control.dataset.action !== 'share'});
+                }
+                perform(control.dataset.action);
+            }
         });
         pageInput.addEventListener('change', () => goToPage(pageInput.value));
+        pageInput.addEventListener('keydown', event => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                goToPage(pageInput.value);
+                pageInput.select();
+            }
+        });
+        zoomRange.addEventListener('input', () => {
+            state.zoom = Number(zoomRange.value) / 100;
+            $('[data-zoom-label]').textContent = `${zoomRange.value}%`;
+            clearTimeout(window.readerZoomTimer);
+            window.readerZoomTimer = setTimeout(() => showMode(), 90);
+        });
         $$('.reader-tabs [role="tab"]').forEach(tab => tab.addEventListener('click', () => {
             $$('.reader-tabs [role="tab"]').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
             $$('.reader-panel').forEach(panel => panel.classList.toggle('is-active', panel.dataset.panel === tab.dataset.tab));
@@ -453,6 +579,17 @@ if (root) {
         });
         $('#reader-search').name = 'query';
         window.addEventListener('keydown', event => {
+            revealControls();
+            if (event.key === 'Escape' && !moreMenu.hidden) {
+                event.preventDefault();
+                setMoreMenuOpen(false, {restoreFocus: true});
+                return;
+            }
+            if (event.key === 'Escape' && state.sidebar) {
+                event.preventDefault();
+                setSidebarOpen(false, {restoreFocus: true});
+                return;
+            }
             if (event.target.matches('input, textarea')) return;
             if (event.key === 'ArrowLeft') perform('previous');
             if (event.key === 'ArrowRight' || event.key === ' ') { event.preventDefault(); perform('next'); }
@@ -466,8 +603,73 @@ if (root) {
             const distance = event.changedTouches[0].clientX - touchStart;
             if (state.mode === 'flip' && Math.abs(distance) > 55) perform(distance < 0 ? 'next' : 'previous');
         }, {passive: true});
-        window.addEventListener('resize', () => { clearTimeout(window.readerResizeTimer); window.readerResizeTimer = setTimeout(() => showMode(), 180); });
+        window.addEventListener('resize', () => {
+        clearTimeout(window.readerResizeTimer);
+        window.readerResizeTimer = setTimeout(() => {
+            if (!state.pdf) return;
+            const compact = window.matchMedia('(max-width: 767px)').matches;
+                state.spread = compact ? false : (state.spreadPreference ?? true);
+                if (compact) state.mode = 'flip';
+                showMode(true);
+            }, 180);
+        });
         window.addEventListener('beforeunload', () => saveProgress());
+        moreMenu.addEventListener('keydown', event => {
+            if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+            const items = $$('[role="menuitem"]:not([disabled])', moreMenu);
+            if (!items.length) return;
+            event.preventDefault();
+            const current = Math.max(0, items.indexOf(document.activeElement));
+            const target = event.key === 'Home'
+                ? items[0]
+                : event.key === 'End'
+                    ? items.at(-1)
+                    : items[(current + (event.key === 'ArrowDown' ? 1 : -1) + items.length) % items.length];
+            target.focus();
+        });
+        moreMenu.addEventListener('focusout', () => {
+            requestAnimationFrame(() => {
+                if (!moreMenu.hidden && !moreMenu.contains(document.activeElement) && document.activeElement !== moreButton) {
+                    setMoreMenuOpen(false);
+                }
+            });
+        });
+        document.addEventListener('click', event => {
+            if (!moreMenu.hidden && !moreMenu.contains(event.target) && !moreButton.contains(event.target)) setMoreMenuOpen(false);
+        });
+    }
+
+    function openPanel(panelName) {
+        setSidebarOpen(true);
+        $$('.reader-tabs [role="tab"]').forEach(item => item.setAttribute('aria-selected', String(item.dataset.tab === panelName)));
+        $$('.reader-panel').forEach(panel => panel.classList.toggle('is-active', panel.dataset.panel === panelName));
+        if (panelName === 'search') requestAnimationFrame(() => $('#reader-search')?.focus());
+        showMode();
+    }
+
+    function setSidebarOpen(open, {restoreFocus = false} = {}) {
+        state.sidebar = open;
+        root.classList.toggle('sidebar-closed', !open);
+        sidebar.inert = !open;
+        sidebar.setAttribute('aria-hidden', String(!open));
+        sidebarToggle.setAttribute('aria-expanded', String(open));
+        if (!open && restoreFocus) sidebarToggle.focus();
+    }
+
+    function setFitMode(mode) {
+        state.fit = mode;
+        state.zoom = 1;
+        root.classList.toggle('fit-width-active', mode === 'width');
+        return state.mode === 'flip' ? initFlipBook() : showMode();
+    }
+
+    function setMoreMenuOpen(open, {restoreFocus = false, focusMenu = false} = {}) {
+        moreMenu.hidden = !open;
+        moreButton.setAttribute('aria-expanded', String(open));
+        if (open) revealControls();
+        else scheduleControlsHide();
+        if (open && focusMenu) requestAnimationFrame(() => $('[role="menuitem"]', moreMenu)?.focus());
+        if (!open && restoreFocus) moreButton.focus();
     }
 
     async function loadPdf() {
@@ -485,5 +687,6 @@ if (root) {
     }
 
     bindEvents();
+    revealControls();
     loadPdf();
 }

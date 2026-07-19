@@ -35,7 +35,9 @@ class CatalogSeederTest extends TestCase
         $this->assertSame(5, DB::table('collections')->whereExists(
             fn ($query) => $query->selectRaw('1')->from('book_collection')->whereColumn('book_collection.collection_id', 'collections.id')
         )->count());
-        $this->assertFileExists(public_path('images/demo-covers/civic-red.webp'));
+        $firstPageCover = 'images/demo-covers/demo-reader-first-page.webp';
+        $this->assertSame([$firstPageCover], Book::query()->distinct()->pluck('cover_image')->all());
+        $this->assertFileExists(public_path($firstPageCover));
     }
 
     public function test_catalog_seed_restores_soft_deleted_demo_records_without_duplicates(): void

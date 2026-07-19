@@ -16,19 +16,7 @@ class PdfValidationService
 
         $path = $file->getRealPath();
         $contents = file_get_contents($path);
-
-        if ($contents === false || ! str_starts_with($contents, '%PDF-')) {
-            throw new RuntimeException('Berkas tidak memiliki signature PDF yang valid.');
-        }
-
-        if (! str_contains(substr($contents, -2048), '%%EOF')) {
-            throw new RuntimeException('Struktur akhir PDF tidak ditemukan; berkas mungkin rusak.');
-        }
-
-        $structuralPages = preg_match_all('/\/Type\s*\/Page\b/', $contents);
-        if ($structuralPages < 1) {
-            throw new RuntimeException('PDF tidak memiliki halaman yang dapat dibaca.');
-        }
+        $structuralPages = $this->assertPdfStructure($contents);
 
         $externalCount = $this->probeWithPdfInfo($path);
 
@@ -41,18 +29,33 @@ class PdfValidationService
             throw new RuntimeException('File PDF privat tidak ditemukan.');
         }
 
+        $contents = file_get_contents($path);
+        $structuralPages = $this->assertPdfStructure($contents);
+
         $count = $this->probeWithPdfInfo($path);
         if ($count !== null) {
             return new PdfProbe($count);
         }
 
-        $contents = file_get_contents($path);
-        $pages = $contents === false ? 0 : preg_match_all('/\/Type\s*\/Page\b/', $contents);
-        if ($pages < 1) {
-            throw new RuntimeException('Jumlah halaman PDF tidak dapat dibaca.');
+        return new PdfProbe($structuralPages);
+    }
+
+    private function assertPdfStructure(string|false $contents): int
+    {
+        if ($contents === false || ! str_starts_with($contents, '%PDF-')) {
+            throw new RuntimeException('Berkas tidak memiliki signature PDF yang valid.');
         }
 
-        return new PdfProbe($pages);
+        if (! str_contains(substr($contents, -2048), '%%EOF')) {
+            throw new RuntimeException('Struktur akhir PDF tidak ditemukan; berkas mungkin rusak.');
+        }
+
+        $pages = preg_match_all('/\/Type\s*\/Page\b/', $contents);
+        if ($pages < 1) {
+            throw new RuntimeException('PDF tidak memiliki halaman yang dapat dibaca.');
+        }
+
+        return $pages;
     }
 
     private function probeWithPdfInfo(string $path): ?int

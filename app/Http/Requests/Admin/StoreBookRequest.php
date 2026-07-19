@@ -39,7 +39,7 @@ class StoreBookRequest extends FormRequest
             'tag_ids' => ['sometimes', 'array'],
             'tag_ids.*' => ['integer', 'exists:tags,id'],
             'pdf' => ['nullable', 'file', 'mimes:pdf', 'mimetypes:application/pdf,application/x-pdf', 'max:'.config('pdf.max_upload_kb')],
-            'pdf_url' => ['nullable', 'url', 'max:2048', 'required_without:pdf'],
+            'pdf_url' => ['nullable', 'url:http,https', 'max:2048', 'required_without:pdf'],
         ];
     }
 }

@@ -18,7 +18,7 @@
 - [ ] Member menerima 403 saat membuka `/admin`, termasuk bila memiliki baris override permission.
 - [ ] Superadmin tanpa `dashboard.view` menerima 403; setelah permission diberikan dapat membuka `/admin`.
 - [ ] Dashboard menampilkan metrik, grafik tujuh hari, buku terbaru, dan status backup.
-- [ ] Superadmin dapat membuat draft, mengunggah PDF valid, mengubah metadata, dan menghapus buku sesuai policy.
+- [ ] Superadmin mengunggah PDF valid dan buku langsung berstatus published dengan waktu terbit terisi.
 - [ ] PDF rusak/non-PDF ditolak dengan pesan yang jelas dan tidak meninggalkan file privat.
 - [ ] Status pemrosesan berubah pending → processing → completed atau failed.
 - [ ] Superadmin dapat membuat, mengubah, dan menghapus kategori/koleksi kosong.
@@ -29,13 +29,14 @@
 - [ ] Zoom, fit width/page, thumbnail, outline, pencarian teks, fullscreen, tema, dan reduced motion berfungsi.
 - [ ] Download dan print hanya muncul/berhasil jika izin buku aktif.
 - [ ] Favorit, bookmark, riwayat, halaman terakhir, koleksi pribadi, langganan, dan notifikasi tersimpan.
-- [ ] Superadmin menjalankan alur draft → tinjauan → dikembalikan/diterbitkan/dijadwalkan → arsip beserta catatan.
+- [ ] Halaman edit tidak menampilkan alur publikasi dan endpoint submit/return/publish/archive menghasilkan 404.
 - [ ] Member tidak dapat melihat statistik admin, audit log, atau status backup.
 - [ ] Audit log menolak update/delete langsung dan ekspor CSV dapat dibuka.
 - [ ] Backup queued berubah pending → running → completed dan checksum cocok.
 - [ ] Embed buku/rak/kategori ditolak dari referer di luar allowlist.
 - [ ] Superadmin dengan 2FA aktif selalu melewati challenge setelah login baru; member ditolak dari seluruh endpoint 2FA admin.
 - [ ] Manifest PWA terdeteksi; offline shell tersedia; endpoint PDF tidak masuk cache.
+- [ ] Logo `/images/logo.png` tampil pada header, footer, sidebar admin, favicon, dan manifest PWA.
 
 ## Mobile
 

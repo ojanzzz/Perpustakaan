@@ -13,7 +13,7 @@
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#991b1b">
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" href="/images/pwa-icon.svg" type="image/svg+xml">
+    <link rel="icon" href="/images/logo.png" type="image/png">
     <meta name="description" content="{{ $description }}">
     <link rel="canonical" href="{{ $canonical }}">
     <meta property="og:locale" content="id_ID">
@@ -32,7 +32,7 @@
     <header class="site-header" data-site-header>
         <div class="portal-container flex h-[76px] items-center justify-between gap-5">
             <a href="{{ route('home') }}" class="flex min-w-0 items-center gap-3 text-navy" aria-label="E-Perpustakaan Digital KPU — Beranda">
-                <span class="brand-mark" aria-hidden="true"><span></span></span>
+                <span class="grid h-10 w-14 shrink-0 place-items-center rounded-lg bg-navy p-1.5 shadow-sm"><img src="{{ asset('images/logo.png') }}" alt="Logo E-Perpustakaan Digital KPU" class="h-full w-full object-contain" width="813" height="433"></span>
                 <span class="min-w-0"><strong class="block truncate text-[15px] leading-tight sm:text-base">E-Perpustakaan Digital KPU</strong><small class="hidden text-[11px] text-slate-500 sm:block">Portal literasi kepemiluan</small></span>
             </a>
             <nav aria-label="Navigasi utama" class="hidden items-center gap-1 lg:flex">
@@ -79,7 +79,7 @@
     <main id="konten-utama">{{ $slot }}</main>
     <footer class="site-footer mt-20">
         <div class="portal-container grid gap-10 py-14 md:grid-cols-[1.35fr_.8fr_.8fr_1fr]">
-            <div><div class="flex items-center gap-3"><span class="brand-mark brand-mark-light" aria-hidden="true"><span></span></span><strong>E-Perpustakaan Digital KPU</strong></div><p class="mt-4 max-w-md text-sm leading-6 text-slate-300">Katalog digital untuk memperluas akses masyarakat terhadap pengetahuan dan publikasi kepemiluan.</p></div>
+            <div><div class="flex items-center gap-3"><span class="grid h-10 w-14 shrink-0 place-items-center rounded-lg border border-white/15 bg-white/10 p-1.5"><img src="{{ asset('images/logo.png') }}" alt="Logo E-Perpustakaan Digital KPU" class="h-full w-full object-contain" width="813" height="433"></span><strong>E-Perpustakaan Digital KPU</strong></div><p class="mt-4 max-w-md text-sm leading-6 text-slate-300">Katalog digital untuk memperluas akses masyarakat terhadap pengetahuan dan publikasi kepemiluan.</p></div>
             <div><h2 class="footer-title">Jelajahi</h2><div class="mt-4 grid gap-2 text-sm text-slate-300"><a href="{{ route('catalog.index') }}">Katalog</a><a href="{{ route('catalog.latest') }}">Koleksi terbaru</a><a href="{{ route('catalog.popular') }}">Terpopuler</a><a href="{{ route('guide') }}">Panduan</a></div></div>
             <div><h2 class="footer-title">Informasi</h2><div class="mt-4 grid gap-2 text-sm text-slate-300"><a href="{{ route('about') }}">Tentang</a><a href="{{ route('contact') }}">Kontak</a><a href="{{ route('privacy') }}">Kebijakan privasi</a></div></div>
             <div><h2 class="footer-title">Hubungi kami</h2><p class="mt-4 text-sm leading-6 text-slate-300">Gunakan halaman kontak untuk saran, pertanyaan, atau laporan dokumen bermasalah.</p><a href="{{ route('contact') }}" class="footer-contact-link">Buka halaman kontak <x-public.icon name="arrow" /></a></div>

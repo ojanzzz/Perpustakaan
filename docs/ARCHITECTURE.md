@@ -3,7 +3,7 @@
 ## 1. Ringkasan arsitektur
 
 The system is a modular Laravel monolith. HTTP controllers and Livewire components are
-thin adapters; domain services own workflows such as authorization, publication,
+thin adapters; domain services own boundaries such as authorization, direct publication,
 private document delivery, PDF processing, analytics, audit, and backup. Public pages
 are server-rendered for SEO and resilient cPanel operation. AJAX endpoints are RESTful
 and protected with validation, throttling, policies, and consistent JSON responses.
@@ -19,7 +19,7 @@ used for catalog metadata and aggregate statistics, never as the sole copy of da
 | Identity | Login, registration switch, verification, password reset, profile, 2FA boundary |
 | Authorization | three-level access validation, granular permission resolution, middleware, gates, policies |
 | Catalog | books, authors, publishers, languages, tags, categories, collections |
-| Content Workflow | draft, review, rejection notes, schedule, publish, archive, versions |
+| Content Management | immediate publication, metadata editing, PDF replacement, versions |
 | PDF Processing | validation, private storage, extraction, thumbnail, optimization, queue status |
 | Public Portal | home, catalog, shelves, categories, details, SEO, sitemap |
 | Reader | PDF.js, page flip, scroll fallback, lazy pages, bookmarks, last page |
@@ -69,8 +69,8 @@ erDiagram
 app/
 ├── Domain/
 │   ├── Authorization/  ├── Books/       ├── Documents/
-│   ├── Publishing/     ├── Reader/      ├── Search/
-│   ├── Analytics/      ├── Audit/       └── Backup/
+│   ├── Reader/         ├── Search/      ├── Analytics/
+│   ├── Audit/          └── Backup/
 ├── Http/
 │   ├── Controllers/    ├── Middleware/  ├── Requests/  └── Resources/
 ├── Livewire/
@@ -111,7 +111,7 @@ docs/
 Seluruh route berikut hanya dapat diakses superadmin dan tetap dilindungi permission
 granular:
 
-`/admin`, `/admin/books`, `/admin/books/{book}/submit|return|publish|archive`,
+`/admin`, `/admin/books`, `/admin/books/create`, `/admin/books/{book}/edit`,
 `/admin/collections`, `/admin/categories`, `/admin/users`,
 `/admin/users/{user}/permissions`, `/admin/statistics`, `/admin/feedback`,
 `/admin/audit-logs`, `/admin/backups`, dan `/admin/settings`.
@@ -127,7 +127,7 @@ dan `POST|DELETE /api/member/books/{book}/bookmarks[/{page}]`.
 Core identity: `users`, `institutions`, `permissions`, `role_permissions`,
 `user_permissions`.
 
-Catalog: `books`, `book_versions`, `book_reviews`, `categories`, `book_category`, `collections`,
+Catalog: `books`, `book_versions`, `book_reviews` (historical compatibility), `categories`, `book_category`, `collections`,
 `book_collection`, `authors`, `book_author`, `publishers`, `tags`, `book_tag`,
 `languages`.
 

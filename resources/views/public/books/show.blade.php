@@ -1,6 +1,6 @@
 @php
     $description = $book->description ? \Illuminate\Support\Str::limit(strip_tags($book->description), 160) : 'Detail publikasi '.$book->title;
-    $coverUrl = $book->cover_image ? asset($book->cover_image) : null;
+    $coverUrl = $book->coverUrl();
     $jsonLd = ['@context'=>'https://schema.org','@type'=>'Book','name'=>$book->title,'url'=>route('books.show',$book),'datePublished'=>$book->publication_date?->toDateString() ?: $book->publication_year,'inLanguage'=>$book->language?->code,'isbn'=>$book->isbn,'author'=>$book->authors->map(fn($author)=>['@type'=>'Person','name'=>$author->name])->all()];
 @endphp
 <x-layouts.app :title="$book->title.' — E-Perpustakaan Digital KPU'" :description="$description" :canonical="route('books.show',$book)" :image="$coverUrl" :json-ld="$jsonLd">
