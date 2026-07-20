@@ -6,7 +6,6 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'Dashboard' }} — E-Perpustakaan Digital KPU</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
 </head>
 <body class="min-h-screen bg-slate-100 text-slate-950 antialiased">
     <div class="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
@@ -38,6 +37,5 @@
             </main>
         </div>
     </div>
-    @livewireScripts
 </body>
 </html>

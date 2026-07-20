@@ -25,7 +25,6 @@
     <title>{{ $title }}</title>
     @if($jsonLd)<script type="application/ld+json">{!! json_encode($jsonLd, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}</script>@endif
     @vite(['resources/css/app.css', 'resources/js/app.js'])
-    @livewireStyles
 </head>
 <body class="min-h-screen antialiased">
     <a href="#konten-utama" class="skip-link">Lewati ke konten utama</a>
@@ -86,6 +85,5 @@
         </div>
         <div class="border-t border-white/10"><div class="portal-container flex flex-wrap justify-between gap-3 py-5 text-xs text-slate-400"><span>&copy; {{ date('Y') }} E-Perpustakaan Digital KPU</span><span>Informasi terbuka, aman, dan mudah diakses</span></div></div>
     </footer>
-    @livewireScripts
 </body>
 </html>
