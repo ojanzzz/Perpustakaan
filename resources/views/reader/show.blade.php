@@ -86,15 +86,11 @@
 
         <aside id="reader-sidebar" class="reader-sidebar" aria-label="Alat dokumen" aria-hidden="true" inert>
             <div class="reader-tabs" role="tablist" aria-label="Panel dokumen">
-                @foreach(['outline'=>'Daftar Isi','search'=>'Cari','bookmarks'=>'Bookmark'] as $tab => $label)
+                @foreach(['search'=>'Cari','bookmarks'=>'Bookmark'] as $tab => $label)
                     <button type="button" role="tab" data-tab="{{ $tab }}" aria-selected="{{ $loop->first ? 'true' : 'false' }}">{{ $label }}</button>
                 @endforeach
             </div>
-            <section class="reader-panel is-active" data-panel="outline" aria-label="Daftar isi">
-                <div class="reader-panel-heading"><strong>Daftar isi</strong><span>Struktur dokumen</span></div>
-                <div class="outline-list" data-outline-list><p class="reader-muted">Memuat daftar isi…</p></div>
-            </section>
-            <section class="reader-panel" data-panel="search" aria-label="Pencarian dokumen">
+            <section class="reader-panel is-active" data-panel="search" aria-label="Pencarian dokumen">
                 <form class="reader-search-form" data-search-form><label for="reader-search">Cari dalam dokumen</label><div><input id="reader-search" type="search" minlength="2" placeholder="Masukkan kata kunci"><button type="submit">Cari</button></div></form>
                 <div class="search-results" data-search-results><p class="reader-muted">Hasil pencarian akan tampil di sini.</p></div>
             </section>
@@ -112,12 +108,6 @@
             <button class="page-edge page-edge-left" type="button" data-action="previous" aria-label="Halaman sebelumnya"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button>
             <button class="page-edge page-edge-right" type="button" data-action="next" aria-label="Halaman berikutnya"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button>
         </section>
-
-        <nav class="reader-filmstrip" aria-label="Thumbnail halaman">
-            <button class="filmstrip-scroll" type="button" data-action="scroll-thumbnails-prev" aria-label="Geser thumbnail ke kiri"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
-            <div class="filmstrip-track" data-filmstrip-track data-thumbnail-list></div>
-            <button class="filmstrip-scroll" type="button" data-action="scroll-thumbnails-next" aria-label="Geser thumbnail ke kanan"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
-        </nav>
 
         <div class="reader-accessibility-status sr-only">
             <span data-mode-label>Mode flip</span>

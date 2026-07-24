@@ -34,7 +34,6 @@ if (root) {
     const stage = $('#reader-stage');
     const pageInput = $('[data-page-input]');
     const zoomRange = $('[data-zoom-range]');
-    const filmstripTrack = $('[data-filmstrip-track]');
     const toast = $('[data-toast]');
     const controlBar = $('.reader-control-bar');
     const sidebarToggle = $('[data-action="toggle-sidebar"]');
@@ -117,8 +116,7 @@ if (root) {
     function availableScale(page, spread = false) {
         const base = page.getViewport({scale: 1});
         const controlBarHeight = controlBar.getBoundingClientRect().height || (window.matchMedia('(max-width: 767px)').matches ? 40 : 50);
-        const filmstripHeight = filmstripTrack.getBoundingClientRect().height || 0;
-        const verticalPadding = Math.max(controlBarHeight + 12, filmstripHeight + 24);
+        const verticalPadding = controlBarHeight + 16;
         const compact = window.matchMedia('(max-width: 767px)').matches;
         const width = Math.max(200, stage.clientWidth - (compact ? 40 : 160)) / (spread ? 2 : 1);
         const height = Math.max(260, stage.clientHeight - verticalPadding);
@@ -131,7 +129,10 @@ if (root) {
         const page = await getPage(number);
         const scale = context === 'thumbnail' ? 0.2 : availableScale(page, context === 'spread');
         const viewport = page.getViewport({scale: Math.max(0.1, scale)});
-        const ratio = Math.min(window.devicePixelRatio || 1, 2);
+        const minimumRatio = context === 'thumbnail' ? 1 : 2;
+        const maxRenderPixels = context === 'thumbnail' ? 600_000 : 4_500_000;
+        const maxRatio = Math.max(1, Math.sqrt(maxRenderPixels / (viewport.width * viewport.height)));
+        const ratio = Math.min(Math.max(window.devicePixelRatio || 1, minimumRatio), 3, maxRatio);
         const canvas = document.createElement('canvas');
         canvas.width = Math.floor(viewport.width * ratio);
         canvas.height = Math.floor(viewport.height * ratio);
@@ -159,13 +160,6 @@ if (root) {
         url.searchParams.set('page', state.page);
         history.replaceState({}, '', url);
         localStorage.setItem(`reader:last-page:${root.dataset.bookSlug}`, String(state.page));
-        $$('.filmstrip-thumbnail').forEach(item => item.classList.toggle('is-current', Number(item.dataset.page) === state.page));
-        scrollCurrentThumbnailIntoView();
-    }
-
-    function scrollCurrentThumbnailIntoView() {
-        const current = $('.filmstrip-thumbnail.is-current', filmstripTrack);
-        current?.scrollIntoView({behavior: state.reduced ? 'auto' : 'smooth', block: 'nearest', inline: 'center'});
     }
 
     async function initFlipBook() {
@@ -188,14 +182,23 @@ if (root) {
         const bookEl = document.createElement('div');
         bookEl.className = 'flip-book';
         bookEl.style.height = `${pageHeight}px`;
-        const pageImages = [];
+        const pageElements = [];
 
         for (let i = 1; i <= state.total; i++) {
             if (renderGeneration !== flipRenderGeneration) return;
             try {
                 const canvas = await canvasForPage(i, state.spread ? 'spread' : 'page');
                 if (renderGeneration !== flipRenderGeneration) return;
-                pageImages.push(canvas.toDataURL('image/jpeg', 0.92));
+                const pageElement = document.createElement('div');
+                const pageImage = document.createElement('img');
+                pageElement.className = 'flip-page';
+                pageElement.dataset.page = String(i);
+                pageImage.src = canvas.toDataURL('image/png');
+                pageImage.alt = `Halaman ${i}`;
+                pageImage.decoding = 'async';
+                pageImage.draggable = false;
+                pageElement.appendChild(pageImage);
+                pageElements.push(pageElement);
             } catch {
                 if (renderGeneration !== flipRenderGeneration) return;
                 const fallback = document.createElement('canvas');
@@ -208,7 +211,13 @@ if (root) {
                 fallbackContext.font = '16px sans-serif';
                 fallbackContext.textAlign = 'center';
                 fallbackContext.fillText(`Halaman ${i} gagal dimuat`, pageWidth / 2, pageHeight / 2);
-                pageImages.push(fallback.toDataURL('image/jpeg', 0.92));
+                const pageElement = document.createElement('div');
+                const pageImage = document.createElement('img');
+                pageElement.className = 'flip-page';
+                pageImage.src = fallback.toDataURL('image/png');
+                pageImage.alt = `Halaman ${i} gagal dimuat`;
+                pageElement.appendChild(pageImage);
+                pageElements.push(pageElement);
             }
         }
 
@@ -237,7 +246,7 @@ if (root) {
 
         state.flipBookSpread = state.spread;
 
-        state.pageFlip.loadFromImages(pageImages);
+        state.pageFlip.loadFromHTML(pageElements);
         state.pageFlip.on('flip', (e) => {
             if (!state.pageFlip) return;
             state.page = e.data + 1;
@@ -342,53 +351,6 @@ if (root) {
                 scrollViewport.querySelector(`[data-page="${page}"]`)?.scrollIntoView({behavior: smoothFirst && index === 0 ? 'smooth' : 'auto', block: 'start'});
             }, delay));
         });
-    }
-
-    function setupThumbnails() {
-        const list = $('[data-thumbnail-list]');
-        const observer = new IntersectionObserver(entries => entries.forEach(async entry => {
-            if (!entry.isIntersecting || entry.target.dataset.rendered) return;
-            entry.target.dataset.rendered = 'true';
-            const number = Number(entry.target.dataset.page);
-            try {
-                const canvas = await canvasForPage(number, 'thumbnail');
-                $('.thumbnail-canvas', entry.target).replaceChildren(canvas);
-            } catch { $('.thumbnail-canvas', entry.target).textContent = 'Gagal'; }
-        }), {root: list, rootMargin: '100px'});
-        for (let number = 1; number <= state.total; number++) {
-            const button = document.createElement('button');
-            button.type = 'button';
-            button.className = 'filmstrip-thumbnail';
-            button.dataset.page = number;
-            button.innerHTML = `<span class="thumbnail-canvas"><i></i></span><b>${number}</b>`;
-            button.addEventListener('click', () => goToPage(number));
-            list.append(button);
-            observer.observe(button);
-        }
-    }
-
-    async function setupOutline() {
-        const container = $('[data-outline-list]');
-        const outline = await state.pdf.getOutline();
-        if (!outline?.length) {
-            container.innerHTML = '<p class="reader-muted">Dokumen ini tidak memiliki daftar isi tertanam.</p>';
-            return;
-        }
-        container.replaceChildren();
-        const append = (items, depth = 0) => items.forEach(item => {
-            const button = document.createElement('button');
-            button.type = 'button'; button.textContent = item.title; button.style.setProperty('--outline-depth', depth);
-            button.addEventListener('click', async () => {
-                let destination = item.dest;
-                if (typeof destination === 'string') destination = await state.pdf.getDestination(destination);
-                if (!destination) return;
-                const index = await state.pdf.getPageIndex(destination[0]);
-                goToPage(index + 1);
-            });
-            container.append(button);
-            if (item.items?.length) append(item.items, depth + 1);
-        });
-        append(outline);
     }
 
     function renderBookmarks() {
@@ -506,8 +468,6 @@ if (root) {
             case 'next': return state.page + (state.mode === 'flip' && state.spread ? 1 : 0) < state.total ? goToPage(state.page + (state.mode === 'flip' && state.spread ? 2 : 1), 'next') : null;
             case 'zoom-in': state.zoom = Math.min(3, state.zoom + 0.15); return state.mode === 'flip' ? initFlipBook() : showMode();
             case 'zoom-out': state.zoom = Math.max(0.5, state.zoom - 0.15); return state.mode === 'flip' ? initFlipBook() : showMode();
-            case 'scroll-thumbnails-prev': filmstripTrack.scrollBy({left: -Math.max(220, filmstripTrack.clientWidth * .7), behavior: state.reduced ? 'auto' : 'smooth'}); return;
-            case 'scroll-thumbnails-next': filmstripTrack.scrollBy({left: Math.max(220, filmstripTrack.clientWidth * .7), behavior: state.reduced ? 'auto' : 'smooth'}); return;
             case 'fit-width': return setFitMode('width');
             case 'fit-page': return setFitMode('page');
             case 'toggle-mode': state.mode = state.mode === 'flip' ? 'scroll' : 'flip'; return showMode(true);
@@ -694,7 +654,7 @@ if (root) {
             state.page = Math.max(1, Math.min(state.page || Number(localStorage.getItem(`reader:last-page:${root.dataset.bookSlug}`)) || 1, state.total));
             if (root.dataset.authenticated !== 'true' && !state.bookmarks.length) state.bookmarks = JSON.parse(localStorage.getItem(`reader:bookmarks:${root.dataset.bookSlug}`) || '[]');
             loading.hidden = true;
-            setupThumbnails(); setupOutline(); renderBookmarks(); await showMode(true); saveAnalytics(true);
+            renderBookmarks(); await showMode(true); saveAnalytics(true);
         } catch (error) { showError(error); }
     }
 

@@ -16,10 +16,10 @@ class ReaderAnimationContractTest extends TestCase
         $this->assertStringContainsString('flippingTime: state.reduced ? 1 : 800', $javascript);
         $this->assertStringContainsString('drawShadow: true', $javascript);
         $this->assertStringContainsString('showPageCorners: false', $javascript);
-        $this->assertStringContainsString('const pageImages = []', $javascript);
-        $this->assertStringContainsString('pageImages.push(canvas.toDataURL', $javascript);
-        $this->assertStringContainsString('state.pageFlip.loadFromImages(pageImages)', $javascript);
-        $this->assertStringNotContainsString('state.pageFlip.loadFromHTML', $javascript);
+        $this->assertStringContainsString('const pageElements = []', $javascript);
+        $this->assertStringContainsString("pageImage.src = canvas.toDataURL('image/png')", $javascript);
+        $this->assertStringContainsString('state.pageFlip.loadFromHTML(pageElements)', $javascript);
+        $this->assertStringNotContainsString('state.pageFlip.loadFromImages', $javascript);
         $this->assertStringContainsString('usePortrait: !state.spread', $javascript);
         $this->assertStringContainsString("state.pageFlip.on('flip'", $javascript);
         $this->assertStringContainsString('state.pageFlip.destroy()', $javascript);

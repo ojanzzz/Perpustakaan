@@ -23,7 +23,7 @@ class PublicRoutesTest extends TestCase
         $book->categories()->attach($category);
         $book->collections()->attach($collection);
 
-        $this->get('/')->assertOk()->assertSee('Demokrasi untuk Semua')->assertSee('Pusat literasi digital kepemiluan');
+        $this->get('/')->assertOk()->assertSee('Demokrasi untuk Semua')->assertSee('Publikasi');
         $this->get('/kategori/'.$category->slug)->assertOk()->assertSee($book->title);
         $this->get('/rak/'.$collection->slug)->assertOk()->assertSee($book->title);
         $this->get('/terbaru')->assertOk()->assertSee($book->title);
@@ -51,6 +51,22 @@ class PublicRoutesTest extends TestCase
         $this->post('/buku/'.$locked->slug.'/akses', ['password' => 'Buka-2026'])
             ->assertRedirect('/buku/'.$locked->slug);
         $this->get('/buku/'.$locked->slug)->assertOk()->assertSee('Baca sekarang');
+    }
+
+    public function test_detail_omits_secondary_access_card_and_redundant_metadata_rows(): void
+    {
+        $book = $this->publishedBook([
+            'title' => 'Detail Publikasi Ringkas',
+            'original_file' => 'books/private/detail.pdf',
+        ]);
+
+        $this->get('/buku/'.$book->slug)
+            ->assertOk()
+            ->assertSee('Baca sekarang')
+            ->assertDontSee('<aside class="detail-access">', false)
+            ->assertDontSee('<dt>Penerbit</dt>', false)
+            ->assertDontSee('<dt>Bahasa</dt>', false)
+            ->assertDontSee('Akses dokumen');
     }
 
     public function test_private_draft_future_and_expired_slugs_return_not_found(): void
