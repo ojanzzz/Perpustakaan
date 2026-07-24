@@ -48,6 +48,7 @@ if (root) {
     let scrollNavigationUntil = 0;
     let scrollAlignmentTimers = [];
     let flipRenderGeneration = 0;
+    let pagePointerStart = null;
 
     root.classList.toggle('sidebar-closed', !state.sidebar);
     sidebar.inert = !state.sidebar;
@@ -151,6 +152,7 @@ if (root) {
         $('[data-mode-label]').textContent = state.mode === 'flip' ? `Mode flip · ${state.spread ? 'dua halaman' : 'satu halaman'}` : 'Mode scroll';
         $('[data-zoom-label]').textContent = `${Math.round(state.zoom * 100)}%`;
         zoomRange.value = Math.round(state.zoom * 100);
+        root.classList.toggle('page-zoomed', state.zoom > 1);
         const lastVisiblePage = state.mode === 'flip' && state.spread ? Math.min(state.total, state.page + 1) : state.page;
         const canPrevious = state.page > 1;
         const canNext = lastVisiblePage < state.total;
@@ -182,6 +184,7 @@ if (root) {
         const bookEl = document.createElement('div');
         bookEl.className = 'flip-book';
         bookEl.style.height = `${pageHeight}px`;
+        bookEl.style.setProperty('--flip-paper-width', `${state.spread ? pageWidth * 2 : pageWidth}px`);
         const pageElements = [];
 
         for (let i = 1; i <= state.total; i++) {
@@ -229,11 +232,11 @@ if (root) {
         state.pageFlip = new PageFlip(bookEl, {
             width: pageWidth,
             height: pageHeight,
-            size: 'stretch',
+            size: state.zoom > 1 ? 'fixed' : 'stretch',
             minWidth: 200,
-            maxWidth: Math.max(200, stageWidth),
+            maxWidth: Math.max(200, stageWidth, pageWidth),
             minHeight: 280,
-            maxHeight: stageHeight,
+            maxHeight: Math.max(stageHeight, pageHeight),
             maxShadowOpacity: 0.45,
             showCover: false,
             mobileScrollSupport: false,
@@ -242,11 +245,16 @@ if (root) {
             startPage: Math.max(0, Math.min(state.page - 1, state.total - 1)),
             drawShadow: true,
             showPageCorners: false,
+            disableFlipByClick: true,
+            useMouseEvents: state.zoom <= 1,
         });
 
         state.flipBookSpread = state.spread;
 
         state.pageFlip.loadFromHTML(pageElements);
+        if (state.zoom > 1) {
+            state.pageFlip.getUI().removeHandlers();
+        }
         state.pageFlip.on('flip', (e) => {
             if (!state.pageFlip) return;
             state.page = e.data + 1;
@@ -339,6 +347,16 @@ if (root) {
             await state.pageFlip.flip(state.page - 1);
         }
         scheduleProgress();
+    }
+
+    function applyZoom(zoom) {
+        state.zoom = Math.max(0.5, Math.min(3, zoom));
+        updateChrome();
+        return state.mode === 'flip' ? initFlipBook() : showMode();
+    }
+
+    function togglePageZoom() {
+        return applyZoom(state.zoom > 1 ? 1 : 1.75);
     }
 
     function scheduleScrollAlignment(page, smoothFirst = false) {
@@ -466,8 +484,8 @@ if (root) {
         switch (action) {
             case 'previous': return state.page > 1 ? goToPage(state.page - (state.mode === 'flip' && state.spread ? 2 : 1), 'previous') : null;
             case 'next': return state.page + (state.mode === 'flip' && state.spread ? 1 : 0) < state.total ? goToPage(state.page + (state.mode === 'flip' && state.spread ? 2 : 1), 'next') : null;
-            case 'zoom-in': state.zoom = Math.min(3, state.zoom + 0.15); return state.mode === 'flip' ? initFlipBook() : showMode();
-            case 'zoom-out': state.zoom = Math.max(0.5, state.zoom - 0.15); return state.mode === 'flip' ? initFlipBook() : showMode();
+            case 'zoom-in': return applyZoom(state.zoom + 0.15);
+            case 'zoom-out': return applyZoom(state.zoom - 0.15);
             case 'fit-width': return setFitMode('width');
             case 'fit-page': return setFitMode('page');
             case 'toggle-mode': state.mode = state.mode === 'flip' ? 'scroll' : 'flip'; return showMode(true);
@@ -533,9 +551,24 @@ if (root) {
         zoomRange.addEventListener('input', () => {
             state.zoom = Number(zoomRange.value) / 100;
             $('[data-zoom-label]').textContent = `${zoomRange.value}%`;
+            root.classList.toggle('page-zoomed', state.zoom > 1);
             clearTimeout(window.readerZoomTimer);
-            window.readerZoomTimer = setTimeout(() => showMode(), 90);
+            window.readerZoomTimer = setTimeout(() => state.mode === 'flip' ? initFlipBook() : showMode(), 90);
         });
+        flipViewport.addEventListener('pointerdown', event => {
+            if (!event.target.closest('.flip-page')) return;
+            pagePointerStart = {x: event.clientX, y: event.clientY};
+        }, {passive: true});
+        flipViewport.addEventListener('pointerup', event => {
+            if (!pagePointerStart || !event.target.closest('.flip-page')) {
+                pagePointerStart = null;
+                return;
+            }
+            const distance = Math.hypot(event.clientX - pagePointerStart.x, event.clientY - pagePointerStart.y);
+            pagePointerStart = null;
+            if (distance <= 8) togglePageZoom();
+        }, {passive: true});
+        flipViewport.addEventListener('pointercancel', () => { pagePointerStart = null; }, {passive: true});
         $$('.reader-tabs [role="tab"]').forEach(tab => tab.addEventListener('click', () => {
             $$('.reader-tabs [role="tab"]').forEach(item => item.setAttribute('aria-selected', String(item === tab)));
             $$('.reader-panel').forEach(panel => panel.classList.toggle('is-active', panel.dataset.panel === tab.dataset.tab));
@@ -564,12 +597,6 @@ if (root) {
             if (event.key === '-') perform('zoom-out');
             if (event.key.toLowerCase() === 'f') perform('fullscreen');
         });
-        let touchStart = 0;
-        stage.addEventListener('touchstart', event => { touchStart = event.changedTouches[0].clientX; }, {passive: true});
-        stage.addEventListener('touchend', event => {
-            const distance = event.changedTouches[0].clientX - touchStart;
-            if (state.mode === 'flip' && Math.abs(distance) > 55) perform(distance < 0 ? 'next' : 'previous');
-        }, {passive: true});
         window.addEventListener('resize', () => {
             clearTimeout(window.readerResizeTimer);
             window.readerResizeTimer = setTimeout(() => {

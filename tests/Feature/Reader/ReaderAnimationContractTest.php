@@ -31,4 +31,70 @@ class ReaderAnimationContractTest extends TestCase
         $this->assertStringContainsString('@media (prefers-reduced-motion: reduce)', $css);
         $this->assertStringContainsString('.reduce-motion *', $css);
     }
+
+    public function test_portrait_flip_keeps_an_opaque_paper_beneath_backward_animation(): void
+    {
+        $javascript = file_get_contents(resource_path('js/reader.js'));
+        $css = file_get_contents(resource_path('css/reader.css'));
+
+        $this->assertStringContainsString(
+            'bookEl.style.setProperty(\'--flip-paper-width\', `${state.spread ? pageWidth * 2 : pageWidth}px`)',
+            $javascript,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.flip-viewport \.flip-book::before\s*\{[^}]*z-index:\s*0[^}]*background:\s*#fff[^}]*width:\s*var\(--flip-paper-width\)/s',
+            $css,
+        );
+        $this->assertMatchesRegularExpression(
+            '/\.flip-viewport \.stf__wrapper,\s*\.flip-viewport \.stf__block\s*\{[^}]*z-index:\s*1/s',
+            $css,
+        );
+    }
+
+    public function test_small_mobile_toolbar_keeps_back_navigation_visible(): void
+    {
+        $css = file_get_contents(resource_path('css/reader.css'));
+
+        $this->assertStringNotContainsString('.reader-control-primary > a { display: none; }', $css);
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width:\s*430px\).*?\.reader-zoom-controls\s*\{\s*display:\s*none;\s*\}.*?\.reader-control-primary > a\s*\{\s*display:\s*inline-flex;\s*\}/s',
+            $css,
+        );
+    }
+
+    public function test_page_flip_is_the_only_mobile_swipe_owner(): void
+    {
+        $javascript = file_get_contents(resource_path('js/reader.js'));
+
+        $this->assertStringNotContainsString("stage.addEventListener('touchstart'", $javascript);
+        $this->assertStringNotContainsString("stage.addEventListener('touchend'", $javascript);
+        $this->assertStringContainsString('state.pageFlip.loadFromHTML(pageElements)', $javascript);
+    }
+
+    public function test_page_surface_owns_click_to_zoom_without_icon_buttons(): void
+    {
+        $view = file_get_contents(resource_path('views/reader/show.blade.php'));
+        $javascript = file_get_contents(resource_path('js/reader.js'));
+        $css = file_get_contents(resource_path('css/reader.css'));
+
+        $this->assertDoesNotMatchRegularExpression(
+            '/reader-zoom-controls(?:(?!<\/div>).)*data-action="zoom-(?:in|out)"/s',
+            $view,
+        );
+        $this->assertStringContainsString('data-zoom-range', $view);
+        $this->assertStringContainsString('disableFlipByClick: true', $javascript);
+        $this->assertStringContainsString("size: state.zoom > 1 ? 'fixed' : 'stretch'", $javascript);
+        $this->assertStringContainsString('useMouseEvents: state.zoom <= 1', $javascript);
+        $this->assertStringContainsString('state.pageFlip.getUI().removeHandlers()', $javascript);
+        $this->assertStringContainsString('function togglePageZoom()', $javascript);
+        $this->assertStringContainsString("flipViewport.addEventListener('pointerdown'", $javascript);
+        $this->assertStringContainsString("flipViewport.addEventListener('pointerup'", $javascript);
+        $this->assertStringContainsString("root.classList.toggle('page-zoomed', state.zoom > 1)", $javascript);
+        $this->assertStringContainsString('maxWidth: Math.max(200, stageWidth, pageWidth)', $javascript);
+        $this->assertStringContainsString('maxHeight: Math.max(stageHeight, pageHeight)', $javascript);
+        $this->assertMatchesRegularExpression('/\.flip-viewport \.flip-page[^}]*cursor:\s*zoom-in/s', $css);
+        $this->assertMatchesRegularExpression('/\.page-zoomed \.flip-viewport[^}]*overflow:\s*auto/s', $css);
+        $this->assertMatchesRegularExpression('/\.page-zoomed \.stf__parent[^}]*touch-action:\s*auto/s', $css);
+        $this->assertMatchesRegularExpression('/\.page-zoomed \.flip-page[^}]*cursor:\s*zoom-out/s', $css);
+    }
 }

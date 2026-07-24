@@ -57,13 +57,7 @@
             </div>
 
             <div class="reader-control-group reader-zoom-controls" aria-label="Perbesaran">
-                <button class="reader-tool reader-tool-icon" type="button" data-action="zoom-out" aria-label="Perkecil">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M8 11h6m2 5 5 5"/></svg>
-                </button>
                 <label class="reader-zoom-range"><span class="sr-only">Perbesaran</span><input data-zoom-range type="range" min="50" max="300" step="5" value="100"></label>
-                <button class="reader-tool reader-tool-icon" type="button" data-action="zoom-in" aria-label="Perbesar">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M8 11h6m-3-3v6m5 2 5 5"/></svg>
-                </button>
                 <span class="reader-zoom-label" data-zoom-label>100%</span>
                 <button class="reader-tool reader-tool-icon reader-tool-optional" type="button" data-action="fullscreen" aria-label="Layar penuh">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3H3v4m14-4h4v4M7 21H3v-4m14 4h4v-4"/></svg>
